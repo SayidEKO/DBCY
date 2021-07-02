@@ -1,0 +1,51 @@
+/*主按钮未点击状态*/
+.center-icon {
+    height: 50px;
+    width: 50px;
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all linear 0.3s;
+  }
+
+/*主按钮点击状态*/
+.center-icon.activity {
+    transform:rotate(45deg);
+  }
+
+  /*子按钮状态*/
+.sector-item {
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0);
+    cursor: pointer;
+    color: white;
+    top: 0;
+    left: 0;
+    transition: all linear 0.3s;
+    visibility: hidden;
+  }
+
+ .sector-list.active .sector-item {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    background: rgba(69, 148, 215, .9);
+    visibility: visible;
+  }
+.sector-list.active .sector-item:first-child {
+    transform: translate(0, -50px);
+  }
+.sector-list.active .sector-item:nth-child(2) {
+    transform: translate(-40px, -25px);
+  }
+.sector-list.active .sector-item:nth-child(3) {
+    transform: translate(-45px, 20px);
+  }
+  
