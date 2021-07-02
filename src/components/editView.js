@@ -1,16 +1,16 @@
 import { Component } from 'react'
-import { DatePicker, Picker, Icon, Toast, Checkbox } from 'antd-mobile'
+import { DatePicker, Picker, Icon } from 'antd-mobile'
 
 import { withRouter } from 'react-router-dom';
-
-const CheckboxItem = Checkbox.AgreeItem
+import { color_text_black, color_text_blue, color_text_gray, font_text_title } from '../config';
+import { ncBaseDataSynServlet } from '../request/api';
 
 const CustomChildren = props => (
-  <div style={{ fontSize: 10 }}>
+  <div style={{ fontSize: font_text_title }}>
     <div onClick={props.onClick} style={{ display: 'flex', padding: 10, alignItems: 'center' }}>
-      <div style={{ flex: 1, color: '#3B3568' }}>{props.children}</div>
-      <div style={{ textAlign: 'right', color: '#BBBBBB', }}>{props.extra}</div>
-      <Icon type='right' color={'#BBBBBB'} />
+      <div style={{ flex: 1, color: color_text_blue }}>{props.children}</div>
+      <div style={{ textAlign: 'right', color: props.edit ? color_text_black : color_text_gray }}>{props.extra}</div>
+      <Icon type='right' color={props.edit ? color_text_black : color_text_gray} />
     </div>
     <div style={{ borderBottom: '1px solid #BBBBBB', marginLeft: 10, marginRight: 10, display: props.hiddenLine ? 'none' : 'flex' }} />
   </div>
@@ -37,27 +37,37 @@ class EditView extends Component {
           </div>
         );
       case 'input':
+      case 'number':
         return (
-          <div
-            id='editView'
-            suppressContentEditableWarning
-            contentEditable={edit ? "true" : "false"}>
-            {value}
-          </div>
+          <input
+            type={type === 'number' ? 'number' : 'text'}
+            readOnly={!edit}
+            defaultValue={value}
+            onBlur={e => onEditCallBack(index, e.target.value)}
+            style={{
+              width: '100%',
+              borderWidth: 0,
+              textAlign: 'right'
+            }} />
         );
       case 'radio':
         return (
-          <div style={{ display: 'flex', float: 'right', pointerEvents: edit ? 'fill' : 'none' }}>
-            <CheckboxItem
-              checked={value === '是'}
-              onChange={() => onEditCallBack(index, '是')}>
-              <div style={{ fontSize: 10, color: edit ? 'black' : 'gray' }}>是</div>
-            </CheckboxItem>
-            <CheckboxItem
-              checked={value === '否'}
-              onChange={() => onEditCallBack(index, '否')} >
-              <div style={{ fontSize: 10, color: edit ? 'black' : 'gray' }}>否</div>
-            </CheckboxItem>
+          <div style={{
+            display: 'flex', float: 'right',
+            pointerEvents: edit ? 'fill' : 'none',
+            alignItems: 'center',
+            fontSize: font_text_title
+          }}>
+            <input 
+            checked={value === 'Y'}
+            type='radio' style={{ marginRight: 5 }} 
+            onChange={e => onEditCallBack(index, 'Y')} />
+            <div style={{ color: edit ? 'black' : 'gray' }}>是</div>
+            <input 
+            checked={value === 'N'}
+            type='radio' style={{ marginLeft: 20, marginRight: 5 }} 
+            onChange={e => onEditCallBack(index, 'N')}/>
+            <div style={{ color: edit ? 'black' : 'gray' }}>否</div>
           </div>
         )
       default:
@@ -65,17 +75,27 @@ class EditView extends Component {
     }
   }
 
-  getData() {
-    let pickData = [
-      { value: 'chocolate', label: 'Chocolate' },
-      { value: 'strawberry', label: 'Strawberry' },
-      { value: 'vanilla', label: '信息管理科' },
-    ];
-    Toast.loading('loading')
-    setTimeout(() => {
-      Toast.hide()
-      this.setState({ pickData })
-    }, 1000);
+  getData(type) {
+    const { pickData } = this.state
+    let define = this.props.define
+    if (pickData.length === 0) {
+      if (type === 'refer') {
+        ncBaseDataSynServlet(8, [{ refertype: define }]).then(result => {
+          if (result.VALUES.length > 0) {
+            result.VALUES.forEach(item => {
+              pickData.push({ value: item.pk_group, label: item.name })
+            })
+          }
+        });
+      } else {
+        let items = define.split(',')
+        items.forEach(item => {
+          let chars = item.split('=')
+          pickData.push({ [chars[0]]: chars[1] })
+        })
+      }
+    }
+    this.setState({ pickData })
   }
 
   onOk(index, v) {
@@ -87,7 +107,7 @@ class EditView extends Component {
         onEditCallBack(index, item)
       }
     })
-    
+
   }
 
   render() {
@@ -100,7 +120,7 @@ class EditView extends Component {
       hiddenLine,   //是否隐藏下划线
     } = this.props
     const { pickData, pickerValue } = this.state
-    
+
     if (type === 'refer' || type === 'select') {
       return (
         <div style={{ background: 'white' }}>
@@ -112,20 +132,23 @@ class EditView extends Component {
             //默认值
             extra={value}
             onOk={(v) => this.onOk(index, v)}>
-            <CustomChildren onClick={() => this.getData()} hiddenLine={hiddenLine}>{title}</CustomChildren>
+            <CustomChildren
+              edit={edit}
+              hiddenLine={hiddenLine}
+              onClick={() => this.getData(type)}>{title}</CustomChildren>
           </Picker>
         </div>
       )
     } else {
       return (
-        <div style={{ padding: 10, background: 'white', fontSize: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ flex: 1, color: '#3B3568' }}>{title}:</div>
+        <div style={{ background: 'white', fontSize: font_text_title }}>
+          <div style={{ padding: 10, display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, color: color_text_blue }}>{title}:</div>
             <div style={{ flex: 3, textAlign: 'right', color: edit ? 'black' : 'gray' }}>
               {this.child()}
             </div>
           </div>
-          <div style={{ borderBottom: '1px solid #BBBBBB', marginTop: 10, display: hiddenLine ? 'none' : 'flex' }} />
+          <div style={{ borderBottom: '1px solid #BBBBBB', marginLeft: 10, marginRight: 10, display: hiddenLine ? 'none' : 'flex' }} />
         </div>
       )
     }

@@ -12,6 +12,7 @@ import { ncBaseDataSynServlet } from '../../../request/api'
 import store, { addTodo } from '../../../store/store';
 import { isEmpty, getValue } from '../../../utils/utils';
 
+//存表体模板
 let templatesource = []
 //用于记录表名
 let tableName = ''
@@ -38,21 +39,21 @@ class New extends Base {
     })
     ncBaseDataSynServlet(1, [{ funcode: this.props.location.state.funcode_detail, areacode_str }]).then(result => {
       if (result.VALUES.length !== 0) {
-        let temp = []
-        result.VALUES.forEach(data => {
-          for (let key in data) {
+        let dataSource = []
+        result.VALUES.forEach(template => {
+          for (let key in template) {
             if (key === 'card_head') {
-              temp.push(data)
+              //数据
+              dataSource.push(template)
             } else {
-              let body = []
-              // body.push(data[key])
-              templatesource.push(data[key])
-              temp.push({ [key]: body })
+              //新增是没有表体数据，只加模版
+              templatesource.push(template)
+              dataSource.push({[key]: []})
             }
           }
         })
-        this.setState({ dataSource: temp })
-        store.dispatch(addTodo('SET_DETAIL_DataSource', temp))
+        this.setState({ dataSource })
+        store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
       }
     })
   }
@@ -108,19 +109,29 @@ class New extends Base {
     console.log(dataSource);
   }
 
+  //新增
   onTableAddLisenter = (value) => {
     tableName = value
-  }
-
-  //删除
-  onTableDeleteLisenter = (index, title) => {
-
   }
 
   //编辑
   onTableEditLisenter = (index, value) => {
     tableIndex = index
     tableName = value
+  }
+
+  //删除
+  onTableDeleteLisenter = (index, title) => {
+    const { dataSource } = this.state
+    dataSource.forEach(item => {
+      for(let key in item) {
+        if(key === title) {
+          item[key].splice(index, 1)
+        }
+      }
+    })
+    store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
+    this.setState({dataSource})
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -137,11 +148,11 @@ class New extends Base {
           }
         }
       })
-      store.dispatch(addTodo('SET_DETAIL_DataSource', props.propDataSource))
       //用完重置
       tableName = ''
       tableIndex = -1
       store.dispatch(addTodo('SET_DETAIL_Table', null))
+      store.dispatch(addTodo('SET_DETAIL_DataSource', props.propDataSource))
     }
     return { dataSource: props.propDataSource }
   }
@@ -177,6 +188,7 @@ class New extends Base {
                           edit={true}
                           title={item.label}
                           value={getValue(item)}
+                          define={item.define1}
                           type={item.itemtype}
                           hiddenLine={tags[key].length - 1 === index}
                           onEditCallBack={this.onEditCallBack} />
@@ -188,7 +200,7 @@ class New extends Base {
                     <Table
                       key={key}
                       title={key}
-                      templateSource={templatesource[tagIndex - 1]}
+                      templateSource={templatesource[tagIndex - 1][key]}
                       tableSource={tags[key]}
                       onTableAddLisenter={this.onTableAddLisenter}
                       onTableEditLisenter={this.onTableEditLisenter}

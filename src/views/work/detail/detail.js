@@ -15,6 +15,14 @@ import { getValue, isEmpty } from '../../../utils/utils';
 
 
 let listItem
+//存表体模板
+let templatesource = []
+//用于记录表名
+let tableName = ''
+//记录表的下标
+let tableIndex = -1
+//需要删除的远程数据
+let deletes = []
 
 class Detail extends Base {
 
@@ -63,24 +71,25 @@ class Detail extends Base {
             else {
               if (!isEmpty(listItem[templateKey])) {
                 //遍历数据
-              let body = []
-              listItem[templateKey].forEach(item => {
-                //多条数据所以复制出多个模板
-                let newTemplate = JSON.parse(JSON.stringify(template[templateKey]))
-                //遍历模板表体
-                newTemplate.forEach(templateItem => {
-                  for (let key in item) {
-                    //找到就跳出继续下一个
-                    if (templateItem.code === key) {
-                      templateItem.value = item[key]
-                      continue
+                let body = []
+                listItem[templateKey].forEach(item => {
+                  //多条数据所以复制出多个模板
+                  let newTemplate = JSON.parse(JSON.stringify(template[templateKey]))
+                  //遍历模板表体
+                  newTemplate.forEach(templateItem => {
+                    for (let key in item) {
+                      //找到就跳出继续下一个
+                      if (templateItem.code === key) {
+                        templateItem.value = item[key]
+                        continue
+                      }
                     }
-                  }
-                })
+                  })
 
-                body.push(newTemplate)
-              })
-              dataSource.push({ [templateKey]: body })
+                  body.push(newTemplate)
+                })
+                templatesource.push(template)
+                dataSource.push({ [templateKey]: body })
               }
             }
           }
@@ -134,10 +143,9 @@ class Detail extends Base {
   //底部按钮响应事件
   onClick = (title) => {
     let data = {}
-    const { dataSource } = this.state
     switch (title) {
       case '撤回':
-        data = { action: 'unapprove', pk: dataSource.card_head['pk_nrna'] }
+        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'] }
         ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
           Toast.success(result.code, 1, () => {
             this.props.history.goBack()
@@ -145,7 +153,7 @@ class Detail extends Base {
         })
         break;
       case '提交':
-        data = { action: 'sendapprove', pk: dataSource.card_head['pk_nrna'] }
+        data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'] }
         this.save().then(result => {
           ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
             Toast.success(result.code, 1, () => {
@@ -155,7 +163,7 @@ class Detail extends Base {
         })
         break;
       case '审批':
-        data = { action: 'approve', pk: dataSource.card_head['pk_nrna'] }
+        data = { action: 'approve', pk: listItem.card_head['pk_nrna'] }
         ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
           Toast.success(result.code, 1, () => {
             this.props.history.goBack()
@@ -163,7 +171,7 @@ class Detail extends Base {
         })
         break;
       case '驳回':
-        data = { action: 'unapprove', pk: dataSource.card_head['pk_nrna'] }
+        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'] }
         ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
           Toast.success(result.code, 1, () => {
             this.props.history.goBack()
@@ -177,32 +185,62 @@ class Detail extends Base {
 
   onEditCallBack = (index, value) => {
     const { dataSource } = this.state
-    dataSource.forEach(item =>{
-      for(let key in item) {
-        if(key === 'card_head') {
+    dataSource.forEach(item => {
+      for (let key in item) {
+        if (key === 'card_head') {
           item[key][index].value = value
         }
       }
     })
     store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
-    this.setState({dataSource})
+    this.setState({ dataSource })
   }
 
-  onTableDeleteLisenter = (title, index) => {
+  //新增
+  onTableAddLisenter = (value) => {
+    tableName = value
+  }
+
+  //编辑
+  onTableEditLisenter = (index, value) => {
+    tableIndex = index
+    tableName = value
+  }
+
+  //删除
+  onTableDeleteLisenter = (index, title) => {
     const { dataSource } = this.state
     dataSource.forEach(item => {
-      for(let key in item) {
-        if(key === title) {
+      for (let key in item) {
+        //找到对应的表
+        if (key === title) {
+          //默认不是本地新增数据
+          let isAdd = false
+          //遍历表里的字段
+          item[key][index].forEach(v => {
+            //查看是否有isAdd，有则表示此条数据是本地新增可以直接删除，否则需要单独存下来
+            if (v.isAdd) {
+              isAdd = true
+            }
+          })
+          if (!isAdd) {
+            //远程数据的删除记录下来
+            item[title][index].push({ dr: 1 })
+            let bodys = deletes[title] === undefined ? [] : deletes[title]
+            bodys.push(item[title][index])
+            deletes.push({ [title]: bodys })
+          }
           item[title].splice(index, 1)
         }
       }
     })
     store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
-    this.setState({dataSource})
+    this.setState({ dataSource })
   }
 
   //保存方法
   async save() {
+    console.log(this.state.dataSource);
     // const { dataSource } = this.state
     // let head = {}, bodys = []
 
@@ -234,35 +272,29 @@ class Detail extends Base {
 
   static getDerivedStateFromProps(props, state) {
     let table = props.table
-    if(!isEmpty(table)) {
-      let index = table.index
-      props.propDataSource.forEach(item =>{
-        for(let key in item) {
-          for(let tableKey in table) {
-            if(key === tableKey){
-              //添加
-              if(isEmpty(index)) {
-                item[key].push(table[tableKey])
-              }
-              //编辑
-              else{
-                item[key][index] = table[tableKey]
-              }
+    if (!isEmpty(table)) {
+      props.propDataSource.forEach(item => {
+        for (let key in item) {
+          if (key === tableName) {
+            if (tableIndex === -1) {
+              item[tableName].push(table)
+            } else {
+              item[tableName][tableIndex] = table
             }
           }
         }
       })
-      store.dispatch(addTodo('SET_DETAIL_DataSource', props.propDataSource))
-      //用完置空
+      //用完重置
+      tableName = ''
+      tableIndex = -1
       store.dispatch(addTodo('SET_DETAIL_Table', null))
-      return {dataSource: props.propDataSource}
+      store.dispatch(addTodo('SET_DETAIL_DataSource', props.propDataSource))
     }
-    return null
+    return { dataSource: props.propDataSource }
   }
 
   componentDidMount() {
     const { dataSource } = this.state
-    const { propDataSource } = this.props
 
     let element = document.getElementById('action');
     if (element !== null) {
@@ -270,7 +302,7 @@ class Detail extends Base {
       this.setState({ height })
     }
 
-    if (dataSource.length === 0 && propDataSource.length === 0) {
+    if (dataSource.length === 0) {
       this.getTemplate()
     }
   }
@@ -281,12 +313,11 @@ class Detail extends Base {
       <div>
         <div style={{ background: 'white', paddingTop: 10, overflow: 'scroll', height }}>
           {
-            dataSource.map(items => {
+            dataSource.map((items, bodyIndex) => {
               for (let key in items) {
                 if (key === 'card_head') {
                   return (
                     items[key].map((item, index) => {
-                      let value = getValue(item)
                       return (
                         <EditView
                           key={item.code}
@@ -294,8 +325,11 @@ class Detail extends Base {
                           // edit={location.state.edit}
                           edit={true}
                           title={item.label}
-                          value={value}
+                          value={getValue(item)}
+                          //参照编码
+                          define={item.define1}
                           type={item.itemtype}
+                          hiddenLine={items[key].length - 1 === index}
                           onEditCallBack={this.onEditCallBack} />
                       )
                     })
@@ -306,8 +340,10 @@ class Detail extends Base {
                     <Table
                       key={key}
                       title={key}
-                      templateSource={items[key]}
+                      templateSource={templatesource[bodyIndex - 1][key]}
                       tableSource={items[key]}
+                      onTableAddLisenter={this.onTableAddLisenter}
+                      onTableEditLisenter={this.onTableEditLisenter}
                       onTableDeleteLisenter={this.onTableDeleteLisenter} />
                   )
                 }

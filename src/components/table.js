@@ -3,23 +3,24 @@
  */
 import { Component } from 'react'
 import { withRouter } from 'react-router-dom';
+import { color_text_blue, font_table_title, font_text_title } from '../config';
 import { router2tableDetail } from '../utils/routers';
-import store, { addTodo } from '../store/store';
-import { getValue } from '../utils/utils';
+import { countStringWidth, getValue } from '../utils/utils';
 
 
 //记录每个标签宽度
 let widths = []
-//单个字符宽度
-let wordWidth = 20
 
 class Table extends Component {
 
     //添加
     add() {
         const { onTableAddLisenter, templateSource, title } = this.props
+        //防止模版被修改
+        let table = JSON.parse(JSON.stringify(templateSource))
         onTableAddLisenter(title)
-        router2tableDetail(this, { title, table: templateSource })
+        //本地新增的给一个状态标记
+        router2tableDetail(this, { title, table, isAdd: true })
     }
 
     //删除
@@ -39,16 +40,13 @@ class Table extends Component {
         const { title, tableSource, templateSource } = this.props
         //计算每个字段标题的最大宽度
         templateSource.forEach((item, index) => {
-            let title = item['label']
-            widths[index] = title.length * wordWidth
+            widths[index] = countStringWidth(item.label)
         })
         //计算每个字段值的最大宽度
         tableSource.forEach(items => {
             //每一条数据
             items.forEach((item, index) => {
-                //每个字段
-                let value = getValue(item)
-                let tempWidth = value.length * wordWidth
+                let tempWidth = countStringWidth(getValue(item))
                 //如果值的宽度大于标题的宽度就重新赋值
                 if (widths[index] < tempWidth) {
                     widths[index] = tempWidth
@@ -58,15 +56,21 @@ class Table extends Component {
         return (
             <div style={{ position: 'relative' }}>
                 {/* 标签名 */}
-                <div style={{ display: 'flex', padding: 10, background: 'lightGray', color: 'orange', paddingBottom: 10, borderBottom: '1px solid #BBBBBB' }}>
-                    <div style={{ flex: 5, textAlign: 'left' }}>{title}</div>
+                <div style={{
+                    display: 'flex',
+                    padding: 10,
+                    color: color_text_blue,
+                    background: 'lightGray',
+                    fontSize: font_table_title
+                }}>
+                    <div style={{ flex: 5, textAlign: 'left', fontWeight: 'bold' }}>{title}</div>
                     <div style={{ flex: 1, textAlign: 'right' }} onClick={() => this.add()}>+</div>
                 </div>
 
                 {/* 表格 */}
-                <div style={{ whiteSpace: 'nowrap', overflowX: 'auto' }}>
+                <div style={{ whiteSpace: 'nowrap', overflowX: 'auto', fontSize: font_text_title }}>
                     {/* 表头 */}
-                    <div style={{ display: 'flex', padding: 5 }}>
+                    <div style={{ display: 'flex', padding: 5, color: color_text_blue }}>
                         {
                             templateSource.map((item, index) => {
                                 return (
@@ -95,12 +99,12 @@ class Table extends Component {
                                                             onClick={() => this.delete(parentIndex)}
                                                             style={{ background: 'red', marginLeft: 10, width: 40, color: 'white', borderRadius: 10, textAlign: 'center' }}>
                                                             删除
-                                                            </div>
+                                                        </div>
                                                         <div
                                                             onClick={() => this.edit(parentIndex)}
                                                             style={{ background: 'blue', marginLeft: 10, width: 40, color: 'white', borderRadius: 10, textAlign: 'center' }}>
                                                             编辑
-                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )
                                             }

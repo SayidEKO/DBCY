@@ -162,6 +162,7 @@
    onRingMneusClick = (title) => {
      switch (title) {
        case '新增':
+        store.dispatch(addTodo('SET_DETAIL_DataSource', []))
          router2new(this, this.props.location.state)
          break;
        case '编辑':
@@ -221,6 +222,7 @@
              let tableInfo = this.props.location.state
              tableInfo.edit = this.props.flag === 0 ? true : false
              tableInfo.item = baseData[rowID]
+             store.dispatch(addTodo('SET_DETAIL_DataSource', []))
              router2detail(this, tableInfo)
            }
            let newData = JSON.parse(JSON.stringify(dataSource._dataBlob.s1));

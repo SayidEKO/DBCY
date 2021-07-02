@@ -20,6 +20,7 @@ const getToken = () => {
   params.SRCSYS = '企业微信'
   params.VERIFY = 'token'
   params.DATA = [{ user_code: store.getState().userModule.user_code }]
+  // console.log(params);
   return http('post', '/service/ncBaseDataSynServlet', params)
 }
 
@@ -40,7 +41,6 @@ export const ncBaseDataSynServlet = async (type, data, billtype) => {
     store.dispatch(addTodo('SET_USER_CUSERID', result.VALUES[0].cuserid))
     store.dispatch(addTodo('SET_USER_USERNAME', result.VALUES[0].user_name))
   }
-  console.log(params);
   return await http('post', '/service/ncBaseDataSynServlet', params); 
 }
 

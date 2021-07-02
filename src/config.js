@@ -247,5 +247,15 @@ export const menus = {
 export const color_button_blue = '#1296db'
 export const color_button_gray = 'gray'
 
+export const color_text_gray = '#888'
+export const color_text_black = '#fffff'
+export const color_text_blue = '#3B3568'
+
+
+export const color_line_gray = '#3B3568'
+
+export const font_text_title = 10
+export const font_table_title = 16
+
 //环境切换
 export const DEBUG = true
