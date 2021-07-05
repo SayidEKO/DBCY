@@ -9,6 +9,7 @@ import store, { addTodo } from '../../../store/store';
 import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
 import Table from '../../../components/table'
+import Alert from '../../../components/alert'
 
 import { ncBaseDataSynServlet } from '../../../request/api'
 import { getValue, isEmpty } from '../../../utils/utils';
@@ -31,10 +32,12 @@ class Detail extends Base {
     this.state = {
       //高度
       height: document.documentElement.clientHeight,
-      dataSource: []
+      dataSource: [],
+      showAlert: false,
     }
     //列表选中数据的详情
     listItem = props.location.state.item
+
   }
 
   //获取详情模版
@@ -125,12 +128,10 @@ class Detail extends Base {
         return (
           <div id='action' style={{ display: 'flex', position: 'fixed', bottom: 0, width: '100%', }}>
             <TabbarButton
-              sectorMenuItems={['审批', '驳回']}
-              style={[
-                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
-                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
-              ]}
-              sectorMenuItemFunctions={[this.onClick, this.onClick]} />
+              sectorMenuItems={['审批']}
+              style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
+              sectorMenuItemFunctions={[this.onClick]} />
+
           </div>
         )
       case 3:
@@ -142,10 +143,12 @@ class Detail extends Base {
 
   //底部按钮响应事件
   onClick = (title) => {
+    const { cuserid } = this.props
     let data = {}
+    
     switch (title) {
       case '撤回':
-        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'] }
+        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'], cuserid }
         ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
           Toast.success(result.code, 1, () => {
             this.props.history.goBack()
@@ -153,30 +156,18 @@ class Detail extends Base {
         })
         break;
       case '提交':
-        data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'] }
-        this.save().then(result => {
-          ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
-            Toast.success(result.code, 1, () => {
-              this.props.history.goBack()
-            })
-          })
-        })
+        this.setState({ showAlert: true })
+        // data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
+        // this.save().then(result => {
+        //   ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+        //     Toast.success(result.code, 1, () => {
+        //       this.props.history.goBack()
+        //     })
+        //   })
+        // })
         break;
       case '审批':
-        data = { action: 'approve', pk: listItem.card_head['pk_nrna'] }
-        ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
-          Toast.success(result.code, 1, () => {
-            this.props.history.goBack()
-          })
-        })
-        break;
-      case '驳回':
-        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'] }
-        ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
-          Toast.success(result.code, 1, () => {
-            this.props.history.goBack()
-          })
-        })
+        this.setState({ showAlert: true })
         break;
       default:
         break;
@@ -238,9 +229,30 @@ class Detail extends Base {
     this.setState({ dataSource })
   }
 
+  /**
+   * 
+   * @param {审批意见} checkValue 
+   * @param {审批内容} content 
+   * @param {改派、加签人} checkUser 
+   */
+  onAlertClickSubmit = (checkValue, content, checkUser) => {
+    console.log(checkValue+ content + checkUser);
+    const { cuserid } = this.props
+    this.setState({ showAlert: false })
+    // let data = { action: 'approve', pk: listItem.card_head['pk_nrna'], cuserid }
+    // ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+    //   Toast.success(result.code, 1, () => {
+    //     this.props.history.goBack()
+    //   })
+    // })
+  }
+
+  onAlertClickCancel = () => {
+    this.setState({ showAlert: false })
+  }
+
   //保存方法
   async save() {
-    console.log(this.state.dataSource);
     // const { dataSource } = this.state
     // let head = {}, bodys = []
 
@@ -308,9 +320,13 @@ class Detail extends Base {
   }
 
   render() {
-    const { height, dataSource } = this.state
+    const { height, dataSource, showAlert } = this.state
     return (
-      <div>
+      <div style={{ position: 'relative' }}>
+        <Alert
+          showAlert={showAlert}
+          onAlertClickSubmit={this.onAlertClickSubmit}
+          onAlertClickCancel={this.onAlertClickCancel} />
         <div style={{ background: 'white', paddingTop: 10, overflow: 'scroll', height }}>
           {
             dataSource.map((items, bodyIndex) => {
@@ -361,6 +377,7 @@ class Detail extends Base {
 //映射函数(绑定属性在porps)
 const mapStateToProps = state => {
   return {
+    cuserid: state.userModule.cuserid,
     flag: state.listModule.flag,
     propDataSource: state.detailModule.dataSource,
     table: state.detailModule.table

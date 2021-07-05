@@ -101,6 +101,7 @@
  
    //保存相关
    save = (title) => {
+     const { cuserid } = this.props
      let selectPK = [], action = ''
  
      this.state.dataSource._dataBlob.s1.forEach(v => {
@@ -134,7 +135,7 @@
          break;
      }
  
-     ncBaseDataSynServlet(3, { action, pk: selectPK[0] }, 'ZPXQ').then(result => {
+     ncBaseDataSynServlet(3, { action, pk: selectPK[0], cuserid }, 'ZPXQ').then(result => {
        Toast.success(result.data.message, 1)
        //filter方法筛选数组符合条件的留下
        let newData = JSON.parse(JSON.stringify(this.state.dataSource._dataBlob.s1)).filter(item => !item.checked)
@@ -163,7 +164,9 @@
      switch (title) {
        case '新增':
         store.dispatch(addTodo('SET_DETAIL_DataSource', []))
-         router2new(this, this.props.location.state)
+        //  router2new(this, this.props.location.state)
+        let tableInfo = this.props.location.state
+         router2detail(this, tableInfo)
          break;
        case '编辑':
          if (this.state.dataSource._dataBlob.s1.length > 0) {

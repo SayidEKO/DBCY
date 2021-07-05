@@ -1,7 +1,7 @@
 //底部菜单
-import React from 'react';
+import { Component } from 'react';
 
-export default class TabbarButton extends React.Component {
+export default class TabbarButton extends Component {
 
   getSectorJsx() {
     const { sectorMenuItems, style } = this.props;

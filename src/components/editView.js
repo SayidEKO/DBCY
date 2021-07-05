@@ -1,7 +1,6 @@
 import { Component } from 'react'
 import { DatePicker, Picker, Icon } from 'antd-mobile'
 
-import { withRouter } from 'react-router-dom';
 import { color_text_black, color_text_blue, color_text_gray, font_text_title } from '../config';
 import { ncBaseDataSynServlet } from '../request/api';
 
@@ -16,11 +15,11 @@ const CustomChildren = props => (
   </div>
 );
 
-class EditView extends Component {
+export default class EditView extends Component {
 
   state = {
     pickerValue: [],
-    pickData: []
+    pickData: [],
   }
 
   child() {
@@ -154,5 +153,3 @@ class EditView extends Component {
     }
   }
 }
-
-export default withRouter(EditView)

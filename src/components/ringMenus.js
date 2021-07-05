@@ -1,7 +1,8 @@
 //环形菜单
-import React from 'react';
+import { Component } from 'react';
 import '../style/ringMenus.css'
-export default class RingMenus extends React.Component {
+
+export default class RingMenus extends Component {
   state = {
     sectorMenuVisible: false,
   }
