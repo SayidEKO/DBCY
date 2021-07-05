@@ -8,7 +8,7 @@ import { Toast } from 'antd-mobile';
 
 import TabbarButton from '../components/tabbarButton'
 
-import { ncBaseDataSynServlet } from '../request/api';
+import { getJobBook } from '../request/api';
 
 
 import { color_button_blue, color_button_gray } from '../config'
@@ -43,8 +43,8 @@ class WorkerBook extends Base {
     }
 
     //获取岗位说明说
-    ncBaseDataSynServlet(5, [{ user_code }]).then(result => {
-      this.setState({content:result.VALUES[0].info[0].leirong})
+    getJobBook([{ user_code }]).then(result => {
+      this.setState({ content: result.VALUES[0].info[0].leirong })
     })
   }
 

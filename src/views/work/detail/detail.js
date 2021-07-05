@@ -11,7 +11,7 @@ import TabbarButton from '../../../components/tabbarButton'
 import Table from '../../../components/table'
 import Alert from '../../../components/alert'
 
-import { ncBaseDataSynServlet } from '../../../request/api'
+import { getTemplate, getZPXQData } from '../../../request/api'
 import { getValue, isEmpty } from '../../../utils/utils';
 
 
@@ -48,7 +48,7 @@ class Detail extends Base {
       areacode_str.push({ code: item })
     })
     let data = [{ funcode: this.props.location.state.funcode_detail, areacode_str }]
-    ncBaseDataSynServlet(1, data).then(result => {
+    getTemplate(data).then(result => {
       let dataSource = []
       if (result.VALUES.length !== 0) {
         result.VALUES.forEach(template => {
@@ -149,7 +149,7 @@ class Detail extends Base {
     switch (title) {
       case '撤回':
         data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'], cuserid }
-        ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+        getZPXQData(data).then(result => {
           Toast.success(result.code, 1, () => {
             this.props.history.goBack()
           })
@@ -158,7 +158,7 @@ class Detail extends Base {
       case '提交':
         data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
         this.save().then(result => {
-          ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+          getZPXQData(data).then(result => {
             Toast.success(result.code, 1, () => {
               this.props.history.goBack()
             })
@@ -267,7 +267,7 @@ class Detail extends Base {
         break
     }
     let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
-    // ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+    // getZPXQData(data).then(result => {
     //   Toast.success(result.code, 1, () => {
     //     this.props.history.goBack()
     //   })
@@ -305,7 +305,7 @@ class Detail extends Base {
     // })
     // console.log(head);
 
-    // await ncBaseDataSynServlet(3, { action: 'add', head, bodys }, 'ZPXQ').then(result => {
+    // getZPXQData({ action: 'add', head, bodys }).then(result => {
     //   console.log(result);
     // })
   }

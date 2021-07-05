@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 import { withRouter } from 'react-router-dom'
 
 import { router2workerbook, router2work } from "../utils/routers";
-import { ncBaseDataSynServlet } from '../request/api';
+import { getWorkerBook } from '../request/api';
 import { DEBUG } from '../config';
 
 
@@ -19,8 +19,8 @@ class Index extends Component {
     } else {
       localStorage.setItem('sign', false)
       //获取员工手册(这里需要调2次，第一创建，第二次签订)
-      ncBaseDataSynServlet(6, [{ user_code }]).then(result => {
-        ncBaseDataSynServlet(6, [{ user_code }]).then(result => {
+      getWorkerBook([{ user_code }]).then(result => {
+        getWorkerBook([{ user_code }]).then(result => {
           //签订地址
           let url = result.VALUES[0].url
           //表示已读未读

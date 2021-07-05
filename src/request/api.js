@@ -27,22 +27,32 @@ const getToken = () => {
   return http('post', '/service/ncBaseDataSynServlet', params)
 }
 
+/**
+ * 上传文件
+ * @param {文件} file 
+ * @param {*} pk 
+ * @returns 
+ */
+export const uploadFile = async (file, pk = '1001ZZ10000000009EQY') => {
+  const formData = new FormData();
+  formData.append('TYPE', 11)
+  formData.append('KEY', 'wdhl')
+  formData.append('SID', Math.floor(Math.random() * (100)))
+  formData.append('billtype', 'ZPXQ')
+  formData.append('SRCSYS', '企业微信')
+  formData.append('pk', pk)
+  formData.append('file', file)
+  return await http('post', '/service/fileDataUpLoadServlet', formData)
+}
 
 /**
  * 基本请求
- * @param {
- * 1:模版
- * 2:token
- * 3:招聘需求数据
- * 5:岗位说明书
- * 6:员工手册
- * 8:参照
- * } type 
+ * @param {*} type 
  * @param {数据体} data 
  * @param {billtype} billtype 
  * @returns 
  */
-export const ncBaseDataSynServlet = async (type, data, billtype) => {
+const ncBaseDataSynServlet = async (type, data, billtype) => {
   let params = {}
   params.SID = Math.floor(Math.random() * (100));
   params.KEY = 'wdhl'
@@ -67,19 +77,44 @@ export const ncBaseDataSynServlet = async (type, data, billtype) => {
 }
 
 /**
- * 上传文件
- * @param {文件} file 
- * @param {*} pk 
+ * 获取模版
+ * @param {*} param 
  * @returns 
  */
-export const uploadFile = async (file, pk = '1001ZZ10000000009EQY') => {
-  const formData = new FormData();
-  formData.append('TYPE', 11)
-  formData.append('KEY', 'wdhl')
-  formData.append('SID', Math.floor(Math.random() * (100)))
-  formData.append('billtype', 'ZPXQ')
-  formData.append('SRCSYS', '企业微信')
-  formData.append('pk', pk)
-  formData.append('file', file)
-  return await http('post', '/service/fileDataUpLoadServlet', formData)
+export async function getTemplate(param) {
+  return await ncBaseDataSynServlet(1, param, 'ZPXQ')
+}
+
+/**
+ * 获取招聘需求数据
+ * @param {*} param 
+ * @returns 
+ */
+export async function getZPXQData(param) {
+  return await ncBaseDataSynServlet(3, param, 'ZPXQ')
+}
+
+/**
+ * 获取岗位说明说书
+ * @param {*} param 
+ */
+export async function getJobBook(param) {
+  return await ncBaseDataSynServlet(5, param)
+}
+
+/**
+ * 获取员工手册
+ * @param {*} param 
+ */
+export async function getWorkerBook(param) {
+  return await ncBaseDataSynServlet(6, param)
+}
+
+
+/**
+ * 获取参照
+ * @param {*} param 
+ */
+export async function getType(param) {
+  return await ncBaseDataSynServlet(8, param)
 }

@@ -3,7 +3,7 @@ import { DatePicker, Picker, Icon } from 'antd-mobile'
 import Radio from './radio';
 
 import { color_text_black, color_text_blue, color_text_gray, font_table_title, font_text_title } from '../config';
-import { ncBaseDataSynServlet } from '../request/api';
+import { getType } from '../request/api';
 import { formatData, getDeep } from '../utils/utils';
 
 const CustomChildren = props => (
@@ -77,7 +77,7 @@ export default class EditView extends Component {
     let define = this.props.define
     if (pickData.length === 0) {
       if (type === 'refer') {
-        ncBaseDataSynServlet(8, [{ refertype: define }]).then(result => {
+        getType([{ refertype: define }]).then(result => {
           if (result.VALUES.length > 0) {
             let pickData = formatData(result.VALUES)
             let pickDataDeepLength = getDeep(pickData[0].children, 1)

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { List } from "antd-mobile";
 
-import { ncBaseDataSynServlet, uploadFile } from "../../request/api";
+import { getWorkerBook, uploadFile } from "../../request/api";
 
 const Item = List.Item;
 
@@ -59,14 +59,14 @@ class My extends Base {
   constructor(props) {
     super(props)
     this.state = {
-      data:'ww'
+      data: 'ww'
     }
   }
 
   onItemClick(title, user_code) {
     switch (title) {
       case '员工手册':
-        ncBaseDataSynServlet(6, [{ user_code }]).then(result => {
+        getWorkerBook([{ user_code }]).then(result => {
           //签订地址
           let url = result.VALUES[0].url
           window.location.href = url
@@ -86,7 +86,7 @@ class My extends Base {
       console.log(result)
     })
   }
- 
+
   render() {
     const { user_name, user_code } = this.props
     return (

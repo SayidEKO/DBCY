@@ -8,7 +8,7 @@ import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
 import Table from '../../../components/table'
 
-import { ncBaseDataSynServlet } from '../../../request/api'
+import { getTemplate, getZPXQData } from '../../../request/api'
 import store, { addTodo } from '../../../store/store';
 import { isEmpty, getValue } from '../../../utils/utils';
 
@@ -37,7 +37,7 @@ class New extends Base {
     tables.forEach(item => {
       areacode_str.push({ code: item })
     })
-    ncBaseDataSynServlet(1, [{ funcode: this.props.location.state.funcode_detail, areacode_str }]).then(result => {
+    getTemplate([{ funcode: this.props.location.state.funcode_detail, areacode_str }]).then(result => {
       if (result.VALUES.length !== 0) {
         let dataSource = []
         result.VALUES.forEach(template => {
@@ -93,7 +93,7 @@ class New extends Base {
     })
     head.pk_group = this.props.pk_group
     head.pk_org = this.props.pk_org
-    ncBaseDataSynServlet(3, { action: 'add', head, bodys }, 'ZPXQ').then(result => {
+    getZPXQData({ action: 'add', head, bodys }).then(result => {
       console.log(result);
       Toast.success(result.code, 1, () => {
         this.props.history.goBack()
