@@ -1,12 +1,14 @@
 import { Component } from 'react'
 import { DatePicker, Picker, Icon } from 'antd-mobile'
+import Radio from './radio';
 
-import { color_text_black, color_text_blue, color_text_gray, font_text_title } from '../config';
+import { color_text_black, color_text_blue, color_text_gray, font_table_title, font_text_title } from '../config';
 import { ncBaseDataSynServlet } from '../request/api';
+import { formatData, getDeep } from '../utils/utils';
 
 const CustomChildren = props => (
-  <div style={{ fontSize: font_text_title }}>
-    <div onClick={props.onClick} style={{ display: 'flex', padding: 10, alignItems: 'center' }}>
+  <div onClick={props.onClick} style={{ fontSize: font_text_title }}>
+    <div style={{ display: 'flex', padding: 10, alignItems: 'center' }}>
       <div style={{ flex: 1, color: color_text_blue }}>{props.children}</div>
       <div style={{ textAlign: 'right', color: props.edit ? color_text_black : color_text_gray }}>{props.extra}</div>
       <Icon type='right' color={props.edit ? color_text_black : color_text_gray} />
@@ -18,7 +20,11 @@ const CustomChildren = props => (
 export default class EditView extends Component {
 
   state = {
+    //选中的数据
     pickerValue: [],
+    //数组深度
+    pickDataDeepLength:1,
+    //数据
     pickData: [],
   }
 
@@ -57,16 +63,8 @@ export default class EditView extends Component {
             alignItems: 'center',
             fontSize: font_text_title
           }}>
-            <input 
-            checked={value === 'Y'}
-            type='radio' style={{ marginRight: 5 }} 
-            onChange={e => onEditCallBack(index, 'Y')} />
-            <div style={{ color: edit ? 'black' : 'gray' }}>是</div>
-            <input 
-            checked={value === 'N'}
-            type='radio' style={{ marginLeft: 20, marginRight: 5 }} 
-            onChange={e => onEditCallBack(index, 'N')}/>
-            <div style={{ color: edit ? 'black' : 'gray' }}>否</div>
+            <Radio checkValue={value} onRadioClickCallBack={title => onEditCallBack(index, '是')}>是</Radio>
+            <Radio checkValue={value} onRadioClickCallBack={title => onEditCallBack(index, '否')}>否</Radio>
           </div>
         )
       default:
@@ -75,15 +73,15 @@ export default class EditView extends Component {
   }
 
   getData(type) {
-    const { pickData } = this.state
+    const { pickData,  } = this.state
     let define = this.props.define
     if (pickData.length === 0) {
       if (type === 'refer') {
         ncBaseDataSynServlet(8, [{ refertype: define }]).then(result => {
           if (result.VALUES.length > 0) {
-            result.VALUES.forEach(item => {
-              pickData.push({ value: item.pk_group, label: item.name })
-            })
+            let pickData = formatData(result.VALUES)
+            let pickDataDeepLength = getDeep(pickData[0].children, 1)
+            this.setState({ pickData, pickDataDeepLength })
           }
         });
       } else {
@@ -106,7 +104,6 @@ export default class EditView extends Component {
         onEditCallBack(index, item)
       }
     })
-
   }
 
   render() {
@@ -118,19 +115,29 @@ export default class EditView extends Component {
       index,        //下标
       hiddenLine,   //是否隐藏下划线
     } = this.props
-    const { pickData, pickerValue } = this.state
+    const { pickData, pickerValue, pickDataDeepLength } = this.state
 
     if (type === 'refer' || type === 'select') {
       return (
         <div style={{ background: 'white' }}>
           <Picker
-            cols={1}
+          style={{fontSize: font_text_title}}
+            cols={pickDataDeepLength}
             data={pickData}
             disabled={!edit}
             value={pickerValue}
             //默认值
             extra={value}
-            onOk={(v) => this.onOk(index, v)}>
+            onOk={v => this.onOk(index, v)}
+            onPickerChange={e => {
+              pickData.forEach(item => {
+                //只算最外层的深度
+                if (item.value === e[0]) {
+                  this.setState({pickerValue: e, pickDataDeepLength: getDeep(item.children, 1)})
+                }
+              })
+              
+            }}>
             <CustomChildren
               edit={edit}
               hiddenLine={hiddenLine}

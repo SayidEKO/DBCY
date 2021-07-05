@@ -164,9 +164,7 @@
      switch (title) {
        case '新增':
         store.dispatch(addTodo('SET_DETAIL_DataSource', []))
-        //  router2new(this, this.props.location.state)
-        let tableInfo = this.props.location.state
-         router2detail(this, tableInfo)
+         router2new(this, this.props.location.state)
          break;
        case '编辑':
          if (this.state.dataSource._dataBlob.s1.length > 0) {

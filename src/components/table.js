@@ -2,6 +2,7 @@
  *  标签组件
  */
 import { Component } from 'react'
+import { withRouter } from 'react-router-dom';
 import { color_text_blue, font_table_title, font_text_title } from '../config';
 import { router2tableDetail } from '../utils/routers';
 import { countStringWidth, getValue } from '../utils/utils';
@@ -10,7 +11,7 @@ import { countStringWidth, getValue } from '../utils/utils';
 //记录每个标签宽度
 let widths = []
 
-export default class Table extends Component {
+ class Table extends Component {
 
     //添加
     add() {
@@ -126,3 +127,5 @@ export default class Table extends Component {
     }
 
 }
+
+export default withRouter(Table)

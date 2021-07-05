@@ -145,7 +145,7 @@ class Detail extends Base {
   onClick = (title) => {
     const { cuserid } = this.props
     let data = {}
-    
+
     switch (title) {
       case '撤回':
         data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'], cuserid }
@@ -156,15 +156,14 @@ class Detail extends Base {
         })
         break;
       case '提交':
-        this.setState({ showAlert: true })
-        // data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
-        // this.save().then(result => {
-        //   ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
-        //     Toast.success(result.code, 1, () => {
-        //       this.props.history.goBack()
-        //     })
-        //   })
-        // })
+        data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
+        this.save().then(result => {
+          ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
+            Toast.success(result.code, 1, () => {
+              this.props.history.goBack()
+            })
+          })
+        })
         break;
       case '审批':
         this.setState({ showAlert: true })
@@ -236,15 +235,44 @@ class Detail extends Base {
    * @param {改派、加签人} checkUser 
    */
   onAlertClickSubmit = (checkValue, content, checkUser) => {
-    console.log(checkValue+ content + checkUser);
-    const { cuserid } = this.props
     this.setState({ showAlert: false })
-    // let data = { action: 'approve', pk: listItem.card_head['pk_nrna'], cuserid }
+    const { cuserid } = this.props
+    let pk = listItem.card_head['pk_nrna']
+    let action = 'approve'
+    //审批状态
+    let approve = ''
+    //审批意见
+    let opinion = content
+    //改派，加签人
+    let rgman = checkUser
+    //驳回流程
+    let rejectActivity = ''
+    switch (checkValue) {
+      case '批准':
+        approve = 'Y'
+        break
+      case '不批准':
+        approve = 'N'
+        break
+      case '驳回':
+        approve = 'R'
+        break
+      case '改派':
+        approve = 'T'
+        break
+      case '加签':
+        approve = 'A'
+        break
+      default:
+        break
+    }
+    let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
     // ncBaseDataSynServlet(3, data, 'ZPXQ').then(result => {
     //   Toast.success(result.code, 1, () => {
     //     this.props.history.goBack()
     //   })
     // })
+    console.log(data);
   }
 
   onAlertClickCancel = () => {

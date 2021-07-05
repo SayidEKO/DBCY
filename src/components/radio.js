@@ -4,20 +4,15 @@ import { font_text_title } from '../config'
 
 export default class Radio extends Component {
 
-  onClick() {
-    const { title, onRadioClickCallBack } = this.props
-    onRadioClickCallBack(title)
-  }
-
   render() {
-    const { title, checkValue } = this.props
+    const { children, checkValue, onRadioClickCallBack } = this.props
     return (
       <div onClick={this.props.onClick}>
         <div
-          onClick={() => this.onClick()}
+          onClick={() => onRadioClickCallBack(children)}
           style={{ display: 'flex', alignItems: 'center', padding: 5, fontSize: font_text_title }}>
-          <input type='radio' checked={checkValue === title} />
-          <div style={{ marginLeft: 5 }}>{title}</div>
+          <input type='radio' checked={checkValue === children} onChange={e => console.log(e)}/>
+          <div style={{ marginLeft: 5 }}>{children}</div>
         </div>
       </div>
     )
