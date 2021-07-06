@@ -67,9 +67,6 @@ export default class EditView extends Component {
             <Radio checkValue={value} onRadioClickCallBack={title => onEditCallBack(index, '否')}>否</Radio>
           </div>
         )
-      case 'refer':
-      case 'select':
-        break
       default:
         return null;
     }
@@ -129,21 +126,53 @@ export default class EditView extends Component {
   render() {
     const {
       edit,         //是否可编辑
+      type,         //表示字段类型
       title,        //标题
       value,        //值
       index,        //下标
       hiddenLine,   //是否隐藏下划线
     } = this.props
-    return (
-      <div style={{ background: 'white', fontSize: font_text_title }}>
-        <div style={{ padding: 10, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, color: color_text_blue }}>{title}:</div>
-          <div style={{ flex: 3, textAlign: 'right', color: edit ? 'black' : 'gray' }}>
-            {this.child()}
-          </div>
+    const { pickData, pickerValue, pickDataDeepLength } = this.state
+
+    if (type === 'refer' || type === 'select') {
+      return (
+        <div style={{ background: 'white' }}>
+          <Picker
+            style={{ fontSize: font_text_title }}
+            cols={pickDataDeepLength}
+            data={pickData}
+            disabled={!edit}
+            value={pickerValue}
+            //默认值
+            extra={value}
+            onOk={v => this.onOk(index, v)}
+            onPickerChange={e => {
+              pickData.forEach(item => {
+                //只算最外层的深度
+                if (item.value === e[0]) {
+                  this.setState({ pickerValue: e, pickDataDeepLength: getDeep(item.children, 1) })
+                }
+              })
+            }}>
+            <CustomChildren
+              edit={edit}
+              hiddenLine={hiddenLine}
+              onClick={() => this.getData(type)}>{title}</CustomChildren>
+          </Picker>
         </div>
-        <div style={{ borderBottom: '1px solid #BBBBBB', marginLeft: 10, marginRight: 10, display: hiddenLine ? 'none' : 'flex' }} />
-      </div>
-    )
+      )
+    } else {
+      return (
+        <div style={{ background: 'white', fontSize: font_text_title }}>
+          <div style={{ padding: 10, display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, color: color_text_blue }}>{title}:</div>
+            <div style={{ flex: 3, textAlign: 'right', color: edit ? 'black' : 'gray' }}>
+              {this.child()}
+            </div>
+          </div>
+          <div style={{ borderBottom: '1px solid #BBBBBB', marginLeft: 10, marginRight: 10, display: hiddenLine ? 'none' : 'flex' }} />
+        </div>
+      )
+    }
   }
 }

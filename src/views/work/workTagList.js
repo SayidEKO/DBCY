@@ -15,6 +15,8 @@ import TabbarButton from "../../components/tabbarButton";
 import { getTemplate, getZPXQData } from "../../request/api";
 
 import { router2detail, router2new } from "../../utils/routers";
+import { getValue } from "../../utils/utils";
+import WorkTagListItem from "../../components/workTagListItem";
 
 const tabs = [
   { title: <Badge>待提交</Badge> },
@@ -36,17 +38,17 @@ class WorkTagList extends Base {
 
   constructor(props) {
     super(props)
-    const dataSource = new ListView.DataSource({ rowHasChanged: (row1, row2) => row1 !== row2 });
+    const listData = new ListView.DataSource({ rowHasChanged: (row1, row2) => row1 !== row2 });
     this.state = {
       height: document.documentElement.clientHeight,
       //数据源
-      dataSource,
+      listData,
       //加载状态
       isLoading: true,
       //刷新状态
       refreshing: true,
       //多选状态
-      multi_select: false,
+      multiSelect: false,
       //是否筛选
       search: false,
       //是否空数据提示
@@ -54,7 +56,7 @@ class WorkTagList extends Base {
     };
   }
 
-  //初始化多选状态下按钮
+  //初始化多选状态下的按钮
   initMenus() {
     switch (this.props.flag) {
       case 0:
@@ -102,9 +104,10 @@ class WorkTagList extends Base {
   //保存相关
   save = (title) => {
     const { cuserid } = this.props
+    const { listData } = this.state
     let selectPK = [], action = ''
 
-    this.state.dataSource._dataBlob.s1.forEach(v => {
+    listData._dataBlob.s1.forEach(v => {
       if (v.checked) {
         selectPK.push(v.pk)
       }
@@ -138,40 +141,42 @@ class WorkTagList extends Base {
     getZPXQData({ action, pk: selectPK[0], cuserid }).then(result => {
       Toast.success(result.data.message, 1)
       //filter方法筛选数组符合条件的留下
-      let newData = JSON.parse(JSON.stringify(this.state.dataSource._dataBlob.s1)).filter(item => !item.checked)
+      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1)).filter(item => !item.checked)
       this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(newData),
+        listData: listData.cloneWithRows(newData),
         empty: newData.length > 0 ? false : true,
-        multi_select: false
+        multiSelect: false
       })
     })
   }
 
   //多选取消
   cancel = () => {
-    let newData = JSON.parse(JSON.stringify(this.state.dataSource._dataBlob.s1))
+    const { listData } = this.state
+    let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
     newData.forEach(element => {
       element.checked = false
     });
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(newData),
-      multi_select: false
+      listData: listData.cloneWithRows(newData),
+      multiSelect: false
     })
   }
 
   //菜单点击事件
   onRingMneusClick = (title) => {
+    const { listData } = this.state
     switch (title) {
       case '新增':
         store.dispatch(addTodo('SET_DETAIL_DataSource', []))
         router2new(this, this.props.location.state)
         break;
       case '编辑':
-        if (this.state.dataSource._dataBlob.s1.length > 0) {
-          let newData = JSON.parse(JSON.stringify(this.state.dataSource._dataBlob.s1))
+        if (listData._dataBlob.s1.length > 0) {
+          let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
           this.setState({
-            multi_select: !this.state.multi_select,
-            dataSource: this.state.dataSource.cloneWithRows(newData)
+            multiSelect: !this.state.multiSelect,
+            listData: listData.cloneWithRows(newData)
           })
         }
         break;
@@ -188,7 +193,7 @@ class WorkTagList extends Base {
   pullToRefresh() {
     return (
       <PullToRefresh refreshing={this.state.refreshing} onRefresh={() => {
-        this.state.dataSource = this.state.dataSource.cloneWithRows([])
+        this.state.listData = this.state.listData.cloneWithRows([])
         this.getData(_page = 0)
       }} />
     )
@@ -197,7 +202,7 @@ class WorkTagList extends Base {
   //上拉加载
   onEndReached = () => {
     //没有数据，多选状态下, 空数据状态下禁止加载更多
-    if (!hasMore || this.state.multi_select || this.state.empty) {
+    if (!hasMore || this.state.multiSelect || this.state.empty) {
       return;
     }
     this.getData(++_page)
@@ -206,95 +211,41 @@ class WorkTagList extends Base {
   //页脚
   foot = () => {
     return (
-      <div style={{ padding: 10, textAlign: 'center' }}>
-        {this.state.isLoading ? '正在加载...' : '已经到底了'}
-      </div>
+      <div style={{ padding: 10, textAlign: 'center' }}>{this.state.isLoading ? '正在加载...' : '已经到底了'}</div>
     )
   }
 
-  //主体
-  item = (rowData, sectionID, rowID) => {
-    const { multi_select, dataSource } = this.state
-    return (
-      <div
-        onClick={() => {
-          //多选状态下禁止跳转
-          if (!multi_select) {
-            let tableInfo = this.props.location.state
-            tableInfo.edit = this.props.flag === 0 ? true : false
-            tableInfo.item = baseData[rowID]
-            store.dispatch(addTodo('SET_DETAIL_DataSource', []))
-            router2detail(this, tableInfo)
-          }
-          let newData = JSON.parse(JSON.stringify(dataSource._dataBlob.s1));
-          newData[rowID].checked = !newData[rowID].checked;
-          this.setState({ dataSource: dataSource.cloneWithRows(newData) })
-        }}
-        style={{ display: 'flex', alignItems: 'center', background: '#F5F5F9' }}>
+  //条目点击
+  onItemClick(index) {
+    const { multiSelect, listData } = this.state
+    if (multiSelect) {
+      //多选
+      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1));
+      newData[index].checked = !newData[index].checked;
+      this.setState({ listData: listData.cloneWithRows(newData) })
+    } else {
+      //非多选跳转详情
+      let tableInfo = this.props.location.state
+      tableInfo.edit = this.props.flag === 0 ? true : false
+      tableInfo.item = baseData[index]
+      store.dispatch(addTodo('SET_DETAIL_DataSource', []))
+      router2detail(this, tableInfo)
+    }
+  }
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: 5,
-            padding: 5,
-            width: '100%',
-            background: 'white',
-            borderRadius: 10
-          }}>
-          <Checkbox
-            checked={rowData.checked}
-            style={{ display: multi_select ? 'flex' : 'none', padding: 5 }} />
-          <div>
-            {
-              rowData.data.card_head.map((item, index) => {
-                let value
-                if (typeof item.value == "object") {
-                  value = item.value.name
-                } else {
-                  value = item.value
-                }
-                return (
-                  <div key={rowID + index} style={{ display: 'flex', fontSize: 12 }}>
-                    <div style={{ padding: 5 }}>{item.label}:</div>
-                    <div style={{ padding: 5, color: 'gray' }}>{value}</div>
-                  </div>
-                )
-              })
-            }
-            {
-              rowData.data.card_body.map((item, index) => {
-                let value
-                if (typeof item.value == "object") {
-                  value = item.value.name
-                } else {
-                  value = item.value
-                }
-                return (
-                  <div key={rowID + index} style={{ display: 'flex', fontSize: 12 }}>
-                    <div style={{ padding: 5 }}>{item.label}:</div>
-                    <div style={{ padding: 5, color: 'gray' }}>{value}</div>
-                  </div>
-                )
-              })
-            }
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+  //获取数据
   getData(page = 0) {
     const { cuserid, pk_group, pk_org, flag } = this.props
+    const { listData } = this.state
     let data = [], number = 10
-    if (this.state.dataSource._dataBlob !== null) {
-      data = this.state.dataSource._dataBlob.s1
+    if (listData._dataBlob !== null) {
+      data = listData._dataBlob.s1
     }
 
     let paramsData = { action: 'index_query', cuserid, pk_group, pk_org, state: flag }
     getZPXQData(paramsData).then(result => {
       baseData = result.VALUES
-      result.VALUES.forEach(v => {
+      baseData.forEach(v => {
         let head = v.card_head
         let bodys = v.card_body
         //复制模版
@@ -332,10 +283,10 @@ class WorkTagList extends Base {
         item.data = temp
         data.push(item)
       })
-      // //返回数据条数小于请求数据条数表示没有更多
+      //返回数据条数小于请求数据条数表示没有更多
       hasMore = result.VALUES.length < number ? false : true
       this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(data),
+        listData: listData.cloneWithRows(data),
         refreshing: false,
         isLoading: false,
         empty: data.length > 0 ? false : true
@@ -362,32 +313,36 @@ class WorkTagList extends Base {
   }
 
   render() {
-    const { search, height, multi_select, dataSource, empty } = this.state
+    const { search, height, multiSelect, listData, empty } = this.state
     const { flag, startTime, endTime } = this.props
     return (
       <div>
-        <div style={{ display: multi_select ? 'none' : 'flex', position: 'absolute', bottom: 20, right: 20, zIndex: 2 }}>
+        <div style={{ display: multiSelect ? 'none' : 'flex', position: 'absolute', bottom: 20, right: 20, zIndex: 2 }}>
           <RingMneus
             sectorMenuItems={['新增', '编辑', '筛选']}
-            closeMenus={multi_select}
+            closeMenus={multiSelect}
             sectorMenuItemFunctions={[this.onRingMneusClick, this.onRingMneusClick, this.onRingMneusClick]} />
         </div>
         <div style={{ display: search ? 'flex' : 'none', color: 'gray', padding: 10 }}>
           <div style={{ flex: 1, fontSize: 14 }}>
-            <DatePicker mode="date" onChange={date => {
-              store.dispatch(addTodo('SET_LIST_STARTTIME', date))
-              this.setState({ dataSource: dataSource.cloneWithRows([]) })
-              this.getData(_page = 0)
-            }}>
+            <DatePicker
+              mode="date"
+              onChange={date => {
+                store.dispatch(addTodo('SET_LIST_STARTTIME', date))
+                this.setState({ listData: listData.cloneWithRows([]) })
+                this.getData(_page = 0)
+              }}>
               <div>开始时间:{startTime.toLocaleDateString()}</div>
             </DatePicker>
           </div>
           <div style={{ flex: 1, fontSize: 14, textAlign: 'right' }}>
-            <DatePicker mode="date" onChange={date => {
-              store.dispatch(addTodo('SET_LIST_ENDTIME', date))
-              this.setState({ dataSource: dataSource.cloneWithRows([]) })
-              this.getData(_page = 0)
-            }}>
+            <DatePicker
+              mode="date"
+              onChange={date => {
+                store.dispatch(addTodo('SET_LIST_ENDTIME', date))
+                this.setState({ listData: listData.cloneWithRows([]) })
+                this.getData(_page = 0)
+              }}>
               <div>结束时间:{endTime.toLocaleDateString()}</div>
             </DatePicker>
           </div>
@@ -398,9 +353,7 @@ class WorkTagList extends Base {
           ref={el => this.tabs = el}
           onChange={(tab, index) => {
             store.dispatch(addTodo('SET_LIST_FLAG', index))
-            this.setState({ dataSource: this.state.dataSource.cloneWithRows([]) }, () => {
-              this.getData(_page = 0)
-            })
+            this.setState({ listData: listData.cloneWithRows([]) }, () => this.getData(_page = 0))
           }}>
           <div>
             <div
@@ -410,13 +363,17 @@ class WorkTagList extends Base {
             </div>
             <ListView
               pageSize={5}
-              dataSource={dataSource}
+              dataSource={listData}
               pullToRefresh={this.pullToRefresh()}
               onEndReached={this.onEndReached}
-              renderFooter={this.foot}
-              renderRow={this.item}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }}
-              onScroll={() => { console.log('scroll'); }} />
+              renderFooter={(this.foot)}
+              renderRow={(rowData, sectionID, rowID) =>
+                <WorkTagListItem
+                  itemData={rowData}
+                  index={rowID}
+                  multiSelect={multiSelect}
+                  onItemClick={(index) => this.onItemClick(index)} />}
+              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
           </div>
           <div>
             <div
@@ -426,14 +383,19 @@ class WorkTagList extends Base {
             </div>
             <ListView
               pageSize={5}
-              dataSource={dataSource}
+              dataSource={listData}
               pullToRefresh={this.pullToRefresh()}
               onEndReached={this.onEndReached}
               renderFooter={this.foot}
-              renderRow={this.item}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }}
-              onScroll={() => { console.log('scroll'); }} />
-          </div><div>
+              renderRow={(rowData, sectionID, rowID) =>
+                <WorkTagListItem
+                  itemData={rowData}
+                  index={rowID}
+                  multiSelect={multiSelect}
+                  onItemClick={(index) => this.onItemClick(index)} />}
+              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
+          </div>
+          <div>
             <div
               onClick={() => this.getData(_page = 0)}
               style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
@@ -441,14 +403,19 @@ class WorkTagList extends Base {
             </div>
             <ListView
               pageSize={5}
-              dataSource={dataSource}
+              dataSource={listData}
               pullToRefresh={this.pullToRefresh()}
               onEndReached={this.onEndReached}
               renderFooter={this.foot}
-              renderRow={this.item}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }}
-              onScroll={() => { console.log('scroll'); }} />
-          </div><div>
+              renderRow={(rowData, sectionID, rowID) =>
+                <WorkTagListItem
+                  itemData={rowData}
+                  index={rowID}
+                  multiSelect={multiSelect}
+                  onItemClick={(index) => this.onItemClick(index)} />}
+              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
+          </div>
+          <div>
             <div
               onClick={() => this.getData(_page = 0)}
               style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
@@ -456,16 +423,20 @@ class WorkTagList extends Base {
             </div>
             <ListView
               pageSize={5}
-              dataSource={dataSource}
+              dataSource={listData}
               pullToRefresh={this.pullToRefresh()}
               onEndReached={this.onEndReached}
               renderFooter={this.foot}
-              renderRow={this.item}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }}
-              onScroll={() => { console.log('scroll'); }} />
+              renderRow={(rowData, sectionID, rowID) =>
+                <WorkTagListItem
+                  itemData={rowData}
+                  index={rowID}
+                  multiSelect={multiSelect}
+                  onItemClick={(index) => this.onItemClick(index)} />}
+              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
           </div>
         </Tabs>
-        <div style={{ display: multi_select ? 'flex' : 'none', position: 'fixed', bottom: 0, width: '100%' }}>
+        <div style={{ display: multiSelect ? 'flex' : 'none', position: 'fixed', bottom: 0, width: '100%' }}>
           {this.initMenus()}
         </div>
       </div >

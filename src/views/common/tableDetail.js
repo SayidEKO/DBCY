@@ -53,6 +53,7 @@ class TableDetail extends Base {
                                 title={item.label}
                                 value={getValue(item)}
                                 type={item.itemtype}
+                                define={item.define1}
                                 hiddenLine={temp.length - 1 === index}
                                 onEditCallBack={this.onEditCallBack} />
                         )

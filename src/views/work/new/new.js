@@ -95,7 +95,7 @@ class New extends Base {
     head.pk_org = this.props.pk_org
     getZPXQData({ action: 'add', head, bodys }).then(result => {
       console.log(result);
-      Toast.success(result.code, 1, () => {
+      Toast.success(result.MESSAGE, 1, () => {
         this.props.history.goBack()
       })
     })

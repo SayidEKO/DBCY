@@ -150,7 +150,7 @@ class Detail extends Base {
       case '撤回':
         data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'], cuserid }
         getZPXQData(data).then(result => {
-          Toast.success(result.code, 1, () => {
+          Toast.success(result.MESSAGE, 1, () => {
             this.props.history.goBack()
           })
         })
@@ -159,7 +159,7 @@ class Detail extends Base {
         data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
         this.save().then(result => {
           getZPXQData(data).then(result => {
-            Toast.success(result.code, 1, () => {
+            Toast.success(result.MESSAGE, 1, () => {
               this.props.history.goBack()
             })
           })
@@ -244,7 +244,7 @@ class Detail extends Base {
     //审批意见
     let opinion = content
     //改派，加签人
-    let rgman = checkUser
+    let rgman = checkUser.value === undefined ? '' : checkUser.value
     //驳回流程
     let rejectActivity = ''
     switch (checkValue) {
@@ -256,6 +256,8 @@ class Detail extends Base {
         break
       case '驳回':
         approve = 'R'
+        //查流程
+        rejectActivity=''
         break
       case '改派':
         approve = 'T'
@@ -267,12 +269,11 @@ class Detail extends Base {
         break
     }
     let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
-    // getZPXQData(data).then(result => {
-    //   Toast.success(result.code, 1, () => {
-    //     this.props.history.goBack()
-    //   })
-    // })
-    console.log(data);
+    getZPXQData(data).then(result => {
+      Toast.success(result.MESSAGE, 1, () => {
+        this.props.history.goBack()
+      })
+    })
   }
 
   onAlertClickCancel = () => {

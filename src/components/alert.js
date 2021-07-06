@@ -4,21 +4,8 @@ import { TextareaItem, Picker } from 'antd-mobile'
 
 import Radio from './radio'
 import { color_text_blue, font_text_title } from '../config'
-
-const pickData = [
-  {
-    value: '1',
-    label: '张三1'
-  },
-  {
-    value: '11',
-    label: '张三2'
-  },
-  {
-    value: '111',
-    label: '张三3'
-  }
-]
+import { getType } from '../request/api'
+import { getUserData, getDepartment } from '../utils/utils'
 
 export default class Alert extends Component {
 
@@ -28,41 +15,57 @@ export default class Alert extends Component {
     //审批意见
     content: '',
     tag: '',
+    //选中人
+    checkUser: {},
     //改派人，加签人
-    checkUser: ''
+    checkUserData: []
   }
 
   onRadioClickCallBack(title) {
-    let tag = title === '改派' || title === '加签' ? title : ''
-    this.setState({ checkValue: title, tag, checkUser: '' })
+    let tag = ''
+    if (title === '改派' || title === '加签') {
+      tag = title
+      getType([{ refertype: 'psndoc' }]).then(result => {
+        if (result.VALUES.length > 0) {
+          let checkUserData = []
+          getUserData(result.VALUES, checkUserData)
+          this.setState({ tag, checkValue: title, checkUser: {}, checkUserData })
+        }
+      })
+    } else if ('驳回') {
+      
+    } else {
+      this.setState({ tag, checkValue: title, checkUser: {} })
+    }
   }
 
+  //确定
   onSubmit() {
     const { onAlertClickSubmit } = this.props
     const { checkValue, content, checkUser } = this.state
     onAlertClickSubmit(checkValue, content, checkUser)
-    this.setState({ checkValue: '', checkUser: '', content: '', tag: '' })
+    this.setState({ checkValue: '', checkUser: {}, content: '', tag: '' })
   }
 
+  //取消
   onCancel() {
     const { onAlertClickCancel } = this.props
     onAlertClickCancel()
   }
 
+  //参照选中
   onOk(e) {
-    pickData.forEach(item => {
+    const { checkUserData } = this.state
+    checkUserData.forEach(item => {
       if (item.value === e[0]) {
-        this.setState({ checkUser: item.label })
+        this.setState({ checkUser: item })
       }
     })
   }
 
-
-
-
   render() {
     const { showAlert } = this.props
-    const { checkValue, tag, checkUser, content } = this.state
+    const { checkUserData, checkValue, tag, checkUser, content } = this.state
     return (
       <div>
         <div style={{
@@ -89,16 +92,19 @@ export default class Alert extends Component {
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
               <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >批准</Radio>
               <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >不批准</Radio>
-              <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >驳回</Radio>
-              <Picker
-                cols={1}
-                data={pickData}
+              <Picker cols={1}
+                data={checkUserData}
+                onOk={(e) => this.onOk(e)}>
+                <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >驳回</Radio>
+              </Picker>
+              <Picker cols={1}
+                data={checkUserData}
                 onOk={(e) => this.onOk(e)}>
                 <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >改派</Radio>
               </Picker>
               <Picker
                 cols={1}
-                data={pickData}
+                data={checkUserData}
                 onOk={(e) => this.onOk(e)}>
                 <Radio checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} >加签</Radio>
               </Picker>
@@ -115,7 +121,7 @@ export default class Alert extends Component {
             <div style={{ display: 'flex', width: '100%', color: color_text_blue }}>
               <div style={{ display: checkValue === '改派' || checkValue === '加签' ? 'flex' : 'none', flex: 1, marginLeft: 10 }}>
                 <div>{tag + ':'}</div>
-                <div style={{ marginLeft: 10 }}>{checkUser}</div>
+                <div style={{ marginLeft: 10 }}>{checkUser.label}</div>
               </div>
               <div style={{ display: 'flex', marginRight: 10, marginLeft: 'auto' }}>
                 <button style={{ marginRight: 10 }} onClick={() => this.onSubmit()} >确定</button>
