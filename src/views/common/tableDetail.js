@@ -1,72 +1,87 @@
 import Base from '../base'
 import { withRouter } from "react-router-dom";
+
 import EditView from '../../components/editView'
 import TabbarButton from '../../components/tabbarButton'
+import SelectView from "../../components/selectView";
 
-import { getValue } from '../../utils/utils'
 import store, { addTodo } from '../../store/store';
+
+import { Toast } from 'antd-mobile';
+
+//记录选择字段的下标
+let selectIndex = -1
 
 class TableDetail extends Base {
     constructor(props) {
         super(props)
         this.state = {
-            table: []
+            table: props.location.state.table,
+            showSelect: false,
+            selectData: []
         }
-        this.state.table = props.location.state.table
     }
 
-    onSave = () => {
+    render() {
+        const { table, showSelect, selectData } = this.state
+        return (
+            <div style={{ background: 'white' }}>
+                <SelectView
+                    show={showSelect}
+                    dataSource={selectData}
+                    onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
+                    onClickMaskCallBack={() => this.setState({ showSelect: false })} />
+                <div>
+                    {
+                        table.map((item, index) => {
+                            return (
+                                <EditView
+                                    key={item.code}
+                                    index={index}
+                                    item={item}
+                                    onEditCallBack={this.onEditCallBack} />
+                            )
+                        })
+                    }
+                    <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%' }}>
+                        <TabbarButton
+                            sectorMenuItems={['保存']}
+                            style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
+                            onClickTabbarButton={title => this.onClickTabbarButton()} />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    onClickTabbarButton() {
         const { table } = this.state
-        //表示是本地添加的数据，用于删除
-        if (this.props.location.state.isAdd) {
-            table.push({isAdd: true})
-        }
         this.props.history.goBack()
         store.dispatch(addTodo('SET_DETAIL_Table', table))
     }
 
+    //----------------------------------------Edit----------------------------------------//
     onEditCallBack = (index, value) => {
-        const { table } = this.state
-        table[index].value = value
-        this.setState({})
+        if (Array.isArray(value)) {
+            if (value.length === 0) {
+                selectIndex = -1
+                Toast.info('暂无数据！', 1)
+            } else {
+                selectIndex = index
+                this.setState({ showSelect: true, selectData: value })
+            }
+        } else {
+            const { table } = this.state
+            table[index].value = value
+            this.setState({})
+        }
     }
 
-    render() {
+    //----------------------------------------Select----------------------------------------
+    onSelectResultCallBack(item) {
         const { table } = this.state
-        //用展示的去掉isAdd字段
-        let temp = JSON.parse(JSON.stringify(table))
-        
-        temp.forEach((item, index) => {
-            if (item.isAdd) {
-                temp.splice(index, 1)
-            }
-        })
-        return (
-            <div>
-                {
-                    temp.map((item, index) => {
-                        return (
-                            <EditView
-                                key={item.code}
-                                index={index}
-                                edit={true}
-                                title={item.label}
-                                value={getValue(item)}
-                                type={item.itemtype}
-                                define={item.define1}
-                                hiddenLine={temp.length - 1 === index}
-                                onEditCallBack={this.onEditCallBack} />
-                        )
-                    })
-                }
-                <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%' }}>
-                    <TabbarButton
-                        sectorMenuItems={['保存']}
-                        style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
-                        sectorMenuItemFunctions={[this.onSave]} />
-                </div>
-            </div>
-        )
+        table[selectIndex].value = item
+        this.setState({ table, showSelect: false })
     }
 }
 

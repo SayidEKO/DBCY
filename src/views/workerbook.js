@@ -26,15 +26,6 @@ class WorkerBook extends Base {
     url = props.location.state
   }
 
-  onClick = (title) => {
-    if (!this.state.agree) {
-      Toast.fail('请勾选后再操作！', 1)
-      return
-    }
-    localStorage.setItem('sign', true)
-    window.location.href = url
-  }
-
   componentDidMount() {
     const { user_code } = this.props
     //如果已经跳转过签订页面则返回，重新获取该人员的签订情况
@@ -63,11 +54,20 @@ class WorkerBook extends Base {
           <TabbarButton
             sectorMenuItems={['签订手册']}
             style={[{ flex: 1, padding: 10, borderRadius: 10, background: agree ? color_button_blue : color_button_gray }]}
-            sectorMenuItemFunctions={[this.onClick]} />
+            onClickTabbarButton={title => this.onClickTabbarButton()} />
         </div>
 
       </div>
     )
+  }
+
+  onClickTabbarButton() {
+    if (!this.state.agree) {
+      Toast.fail('请勾选后再操作！', 1)
+      return
+    }
+    localStorage.setItem('sign', true)
+    window.location.href = url
   }
 }
 

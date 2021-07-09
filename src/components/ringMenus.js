@@ -8,30 +8,22 @@ export default class RingMenus extends Component {
   }
 
   getSectorJsx() {
-    const { sectorMenuItems } = this.props;
+    const { sectorMenuItems, onClickRightMenus } = this.props;
 
     if (!sectorMenuItems || !Array.isArray(sectorMenuItems) || sectorMenuItems.length === 0) {
       return;
     }
 
-    return sectorMenuItems.map((item, i) => {
+    return sectorMenuItems.map(item => {
       return (
         <div
-          key={i}
+          key={item}
           className={'sector-item'}
-          onClick={() => this.onClickSectorMenuItem(i)}>
+          onClick={() => onClickRightMenus(item)}>
           {item}
         </div>
       )
     });
-  }
-
-  onClickSectorMenuItem(index) {
-    const { sectorMenuItemFunctions, sectorMenuItems } = this.props;
-    if (!sectorMenuItemFunctions || typeof (sectorMenuItemFunctions[index]) !== 'function') {
-      return;
-    }
-    sectorMenuItemFunctions[index](sectorMenuItems[index]);
   }
 
   componentDidMount() {
@@ -42,17 +34,17 @@ export default class RingMenus extends Component {
     const { sectorMenuVisible } = this.state
     const { closeMenus } = this.props
     if (closeMenus === true && sectorMenuVisible === true) {
-      this.setState({sectorMenuVisible:false})
+      this.setState({ sectorMenuVisible: false })
     }
   }
 
 
- 
+
 
 
   render() {
     const { sectorMenuVisible } = this.state;
-    
+
     return (
       <div>
         <img alt=''

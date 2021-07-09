@@ -5,18 +5,18 @@ import Base from "../base";
 import ReactDOM from "react-dom";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
-import { Tabs, Badge, ListView, PullToRefresh, DatePicker, Checkbox, Toast } from "antd-mobile";
-
-import store, { addTodo } from "../../store/store";
+import { Tabs, Badge, ListView, PullToRefresh, DatePicker, Toast } from "antd-mobile";
 
 import RingMneus from "../../components/ringMenus";
 import TabbarButton from "../../components/tabbarButton";
+import WorkTagListItem from "../../components/workTagListItem";
+
+import store, { addTodo } from "../../store/store";
 
 import { getTemplate, getZPXQData } from "../../request/api";
 
 import { router2detail, router2new } from "../../utils/routers";
-import { getValue } from "../../utils/utils";
-import WorkTagListItem from "../../components/workTagListItem";
+
 
 const tabs = [
   { title: <Badge>待提交</Badge> },
@@ -56,184 +56,10 @@ class WorkTagList extends Base {
     };
   }
 
-  //初始化多选状态下的按钮
-  initMenus() {
-    switch (this.props.flag) {
-      case 0:
-        return (
-          <div style={{ width: '100%' }}>
-            <TabbarButton
-              sectorMenuItems={['删除', '取消']}
-              style={[
-                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
-                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
-              ]}
-              sectorMenuItemFunctions={[this.save, this.cancel]} />
-          </div>
-        )
-      case 1:
-        return (
-          <div style={{ width: '100%' }}>
-            <TabbarButton
-              sectorMenuItems={['撤回', '取消']}
-              style={[
-                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
-                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
-              ]}
-              sectorMenuItemFunctions={[this.save, this.cancel]} />
-          </div>
-        )
-      case 2:
-        return (
-          <div style={{ width: '100%' }}>
-            <TabbarButton
-              sectorMenuItems={['审批', '驳回', '取消']}
-              style={[
-                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
-                { flex: 1, padding: 10, background: 'blue' },
-                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
-              ]}
-              sectorMenuItemFunctions={[this.save, this.save, this.cancel]} />
-          </div>
-        )
-      default:
-        break;
-    }
-  }
-
-  //保存相关
-  save = (title) => {
-    const { cuserid } = this.props
-    const { listData } = this.state
-    let selectPK = [], action = ''
-
-    listData._dataBlob.s1.forEach(v => {
-      if (v.checked) {
-        selectPK.push(v.pk)
-      }
-    })
-
-    if (selectPK.length === 0) {
-      Toast.fail('请勾选后再操作！', 1)
-      return
-    } else {
-      Toast.loading('请稍后...', 0)
-    }
-
-    switch (title) {
-      case '删除':
-        action = 'delete'
-        break;
-      case '撤回':
-        action = 'unapprove'
-        break;
-      case '审批':
-        action = 'approve'
-        break;
-      case '驳回':
-        action = 'unapprove'
-        break;
-
-      default:
-        break;
-    }
-
-    getZPXQData({ action, pk: selectPK[0], cuserid }).then(result => {
-      Toast.success(result.data.message, 1)
-      //filter方法筛选数组符合条件的留下
-      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1)).filter(item => !item.checked)
-      this.setState({
-        listData: listData.cloneWithRows(newData),
-        empty: newData.length > 0 ? false : true,
-        multiSelect: false
-      })
-    })
-  }
-
-  //多选取消
-  cancel = () => {
-    const { listData } = this.state
-    let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
-    newData.forEach(element => {
-      element.checked = false
-    });
-    this.setState({
-      listData: listData.cloneWithRows(newData),
-      multiSelect: false
-    })
-  }
-
-  //菜单点击事件
-  onRingMneusClick = (title) => {
-    const { listData } = this.state
-    switch (title) {
-      case '新增':
-        store.dispatch(addTodo('SET_DETAIL_DataSource', []))
-        router2new(this, this.props.location.state)
-        break;
-      case '编辑':
-        if (listData._dataBlob.s1.length > 0) {
-          let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
-          this.setState({
-            multiSelect: !this.state.multiSelect,
-            listData: listData.cloneWithRows(newData)
-          })
-        }
-        break;
-      case '筛选':
-        this.setState({ search: !this.state.search })
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  //下拉刷新
-  pullToRefresh() {
-    return (
-      <PullToRefresh refreshing={this.state.refreshing} onRefresh={() => {
-        this.state.listData = this.state.listData.cloneWithRows([])
-        this.getData(_page = 0)
-      }} />
-    )
-  }
-
-  //上拉加载
-  onEndReached = () => {
-    //没有数据，多选状态下, 空数据状态下禁止加载更多
-    if (!hasMore || this.state.multiSelect || this.state.empty) {
-      return;
-    }
-    this.getData(++_page)
-  }
-
-  //页脚
-  foot = () => {
-    return (
-      <div style={{ padding: 10, textAlign: 'center' }}>{this.state.isLoading ? '正在加载...' : '已经到底了'}</div>
-    )
-  }
-
-  //条目点击
-  onItemClick(index) {
-    const { multiSelect, listData } = this.state
-    if (multiSelect) {
-      //多选
-      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1));
-      newData[index].checked = !newData[index].checked;
-      this.setState({ listData: listData.cloneWithRows(newData) })
-    } else {
-      //非多选跳转详情
-      let tableInfo = this.props.location.state
-      tableInfo.edit = this.props.flag === 0 ? true : false
-      tableInfo.item = baseData[index]
-      store.dispatch(addTodo('SET_DETAIL_DataSource', []))
-      router2detail(this, tableInfo)
-    }
-  }
-
-  //获取数据
+  /**
+   * 获取数据
+   * @param {页数} page 
+   */
   getData(page = 0) {
     const { cuserid, pk_group, pk_org, flag } = this.props
     const { listData } = this.state
@@ -242,8 +68,8 @@ class WorkTagList extends Base {
       data = listData._dataBlob.s1
     }
 
-    let paramsData = { action: 'index_query', cuserid, pk_group, pk_org, state: flag }
-    getZPXQData(paramsData).then(result => {
+    let params = { action: 'index_query', cuserid, pk_group, pk_org, state: flag }
+    getZPXQData(params).then(result => {
       baseData = result.VALUES
       baseData.forEach(v => {
         let head = v.card_head
@@ -321,7 +147,7 @@ class WorkTagList extends Base {
           <RingMneus
             sectorMenuItems={['新增', '编辑', '筛选']}
             closeMenus={multiSelect}
-            sectorMenuItemFunctions={[this.onRingMneusClick, this.onRingMneusClick, this.onRingMneusClick]} />
+            onClickRightMenus={title => this.onClickRightMenus(title)} />
         </div>
         <div style={{ display: search ? 'flex' : 'none', color: 'gray', padding: 10 }}>
           <div style={{ flex: 1, fontSize: 14 }}>
@@ -441,6 +267,195 @@ class WorkTagList extends Base {
         </div>
       </div >
     )
+  }
+
+  /**
+   * 初始化多选状态下的按钮
+   * @returns 
+   */
+  initMenus() {
+    switch (this.props.flag) {
+      case 0:
+        return (
+          <div style={{ width: '100%' }}>
+            <TabbarButton
+              sectorMenuItems={['删除', '取消']}
+              style={[
+                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
+                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
+              ]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+          </div>
+        )
+      case 1:
+        return (
+          <div style={{ width: '100%' }}>
+            <TabbarButton
+              sectorMenuItems={['撤回', '取消']}
+              style={[
+                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
+                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
+              ]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+          </div>
+        )
+      case 2:
+        return (
+          <div style={{ width: '100%' }}>
+            <TabbarButton
+              sectorMenuItems={['审批', '驳回', '取消']}
+              style={[
+                { flex: 1, padding: 10, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, background: '#1296db' },
+                { flex: 1, padding: 10, background: 'blue' },
+                { flex: 1, padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, background: 'red' }
+              ]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+          </div>
+        )
+      default:
+        break;
+    }
+  }
+
+  /**
+   * 底部按钮点击事件
+   * @param {*} title 
+   * @returns 
+   */
+   onClickTabbarButton(title) {
+    const { cuserid } = this.props
+    const { listData } = this.state
+    let selectPK = [], action = ''
+
+    listData._dataBlob.s1.forEach(v => {
+      if (v.checked) {
+        selectPK.push(v.pk)
+      }
+    })
+
+    if (selectPK.length === 0 && title !== '取消') {
+      Toast.fail('请勾选后再操作！', 1)
+      return
+    }
+
+    switch (title) {
+      case '删除':
+        action = 'delete'
+        break;
+      case '撤回':
+        action = 'unapprove'
+        break;
+      case '审批':
+        action = 'approve'
+        break;
+      case '驳回':
+        action = 'unapprove'
+        break;
+      case '取消':
+        let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
+        newData.forEach(element => element.checked = false);
+        this.setState({ listData: listData.cloneWithRows(newData), multiSelect: false })
+        return
+      default:
+        break;
+    }
+
+    getZPXQData({ action, pk: selectPK[0], cuserid }).then(result => {
+      Toast.success(result.data.message, 1)
+      //filter方法筛选数组符合条件的留下
+      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1)).filter(item => !item.checked)
+      this.setState({
+        listData: listData.cloneWithRows(newData),
+        empty: newData.length > 0 ? false : true,
+        multiSelect: false
+      })
+    })
+  }
+
+  /**
+   * 菜单点击事件
+   * @param {*} title 
+   */
+  onClickRightMenus(title) {
+    const { listData } = this.state
+    switch (title) {
+      case '新增':
+        store.dispatch(addTodo('SET_DETAIL_DataSource', []))
+        router2new(this, this.props.location.state)
+        break;
+      case '编辑':
+        if (listData._dataBlob.s1.length > 0) {
+          let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
+          this.setState({
+            multiSelect: !this.state.multiSelect,
+            listData: listData.cloneWithRows(newData)
+          })
+        }
+        break;
+      case '筛选':
+        this.setState({ search: !this.state.search })
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  //----------------------------------------ListView----------------------------------------
+  /**
+   * 下拉刷新
+   * @returns 
+   */
+  pullToRefresh() {
+    return (
+      <PullToRefresh refreshing={this.state.refreshing} onRefresh={() => {
+        this.state.listData = this.state.listData.cloneWithRows([])
+        this.getData(_page = 0)
+      }} />
+    )
+  }
+
+  /**
+   * 上拉加载
+   * @returns 
+   */
+  onEndReached = () => {
+    //没有数据，多选状态下, 空数据状态下禁止加载更多
+    if (!hasMore || this.state.multiSelect || this.state.empty) {
+      return;
+    }
+    this.getData(++_page)
+  }
+
+  /**
+   * 页脚
+   * @returns 
+   */
+  foot = () => {
+    return (
+      <div style={{ padding: 10, textAlign: 'center' }}>{this.state.isLoading ? '正在加载...' : '已经到底了'}</div>
+    )
+  }
+
+  /**
+   * 条目点击
+   * @param {*} index 下标
+   */
+  onItemClick(index) {
+    const { multiSelect, listData } = this.state
+    if (multiSelect) {
+      //多选
+      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1));
+      newData[index].checked = !newData[index].checked;
+      this.setState({ listData: listData.cloneWithRows(newData) })
+    } else {
+      //非多选跳转详情
+      let tableInfo = this.props.location.state
+      tableInfo.edit = this.props.flag === 0 ? true : false
+      store.dispatch(addTodo('SET_DETAIL_DataSource', []))
+      store.dispatch(addTodo('SET_DETAIL_BaseDataSource', baseData[index]))
+      router2detail(this, tableInfo)
+    }
   }
 }
 

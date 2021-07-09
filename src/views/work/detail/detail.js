@@ -4,18 +4,18 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Toast } from 'antd-mobile'
 
-import store, { addTodo } from '../../../store/store';
-
-import EditView from '../../../components/editView'
-import TabbarButton from '../../../components/tabbarButton'
 import Table from '../../../components/table'
 import Alert from '../../../components/alert'
+import SelectView from "../../../components/selectView";
+import EditView from '../../../components/editView'
+import TabbarButton from '../../../components/tabbarButton'
+
+import store, { addTodo } from '../../../store/store';
 
 import { getTemplate, getZPXQData } from '../../../request/api'
+
 import { getValue, isEmpty } from '../../../utils/utils';
 
-
-let listItem
 //存表体模板
 let templatesource = []
 //用于记录表名
@@ -23,7 +23,11 @@ let tableName = ''
 //记录表的下标
 let tableIndex = -1
 //需要删除的远程数据
-let deletes = []
+let deletes = {}
+//记录选择字段的下标
+let selectIndex = -1
+//记录选择字段的code
+let selectCode = ''
 
 class Detail extends Base {
 
@@ -32,28 +36,34 @@ class Detail extends Base {
     this.state = {
       //高度
       height: document.documentElement.clientHeight,
+      //组装的数据
       dataSource: [],
-      showAlert: false,
+      //参照的数据
+      selectData: [],
+      showSelect: false,
+      showAlert: false
     }
-    //列表选中数据的详情
-    listItem = props.location.state.item
-
   }
 
-  //获取详情模版
-  getTemplate() {
+  /**
+   * 获取详情模版
+   */
+  initTemplate() {
+    const { listItem } = this.props
     let areacode_str = []
+    let funcode = this.props.location.state.funcode_detail.save
     //获取表
     this.props.location.state.table.forEach(item => {
       areacode_str.push({ code: item })
     })
-    let data = [{ funcode: this.props.location.state.funcode_detail, areacode_str }]
+    let data = [{ funcode, areacode_str }]
     getTemplate(data).then(result => {
       let dataSource = []
       if (result.VALUES.length !== 0) {
         result.VALUES.forEach(template => {
           // 遍历模板
           for (let templateKey in template) {
+            template[templateKey].sort((a, b) => { return a.position - b.position })
             //判断是否为表头
             if (templateKey === 'card_head') {
               let tempItem = listItem
@@ -103,259 +113,79 @@ class Detail extends Base {
     })
   }
 
-  //初始底部按钮
-  initMenu() {
-    switch (this.props.flag) {
-      case 0:
-        return (
-          <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%' }}>
-            <TabbarButton
-              sectorMenuItems={['提交']}
-              style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
-              sectorMenuItemFunctions={[(this.onClick)]} />
-          </div>
-        )
-      case 1:
-        return (
-          <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%', }}>
-            <TabbarButton
-              sectorMenuItems={['撤回']}
-              style={[{ flex: 1, padding: 10, borderRadius: 10, background: 'red' }]}
-              sectorMenuItemFunctions={[this.onClick]} />
-          </div>
-        )
-      case 2:
-        return (
-          <div id='action' style={{ display: 'flex', position: 'fixed', bottom: 0, width: '100%', }}>
-            <TabbarButton
-              sectorMenuItems={['审批']}
-              style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
-              sectorMenuItemFunctions={[this.onClick]} />
-
-          </div>
-        )
-      case 3:
-        return (<div id='action' />)
-      default:
-        break;
-    }
-  }
-
-  //底部按钮响应事件
-  onClick = (title) => {
-    const { cuserid } = this.props
-    let data = {}
-
-    switch (title) {
-      case '撤回':
-        data = { action: 'unapprove', pk: listItem.card_head['pk_nrna'], cuserid }
-        getZPXQData(data).then(result => {
-          Toast.success(result.MESSAGE, 1, () => {
-            this.props.history.goBack()
-          })
-        })
-        break;
-      case '提交':
-        data = { action: 'sendapprove', pk: listItem.card_head['pk_nrna'], cuserid }
-        this.save().then(result => {
-          getZPXQData(data).then(result => {
-            Toast.success(result.MESSAGE, 1, () => {
-              this.props.history.goBack()
-            })
-          })
-        })
-        break;
-      case '审批':
-        this.setState({ showAlert: true })
-        break;
-      default:
-        break;
-    }
-  }
-
-  onEditCallBack = (index, value) => {
-    const { dataSource } = this.state
-    dataSource.forEach(item => {
-      for (let key in item) {
-        if (key === 'card_head') {
-          item[key][index].value = value
-        }
-      }
-    })
-    store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
-    this.setState({ dataSource })
-  }
-
-  //新增
-  onTableAddLisenter = (value) => {
-    tableName = value
-  }
-
-  //编辑
-  onTableEditLisenter = (index, value) => {
-    tableIndex = index
-    tableName = value
-  }
-
-  //删除
-  onTableDeleteLisenter = (index, title) => {
-    const { dataSource } = this.state
-    dataSource.forEach(item => {
-      for (let key in item) {
-        //找到对应的表
-        if (key === title) {
-          //默认不是本地新增数据
-          let isAdd = false
-          //遍历表里的字段
-          item[key][index].forEach(v => {
-            //查看是否有isAdd，有则表示此条数据是本地新增可以直接删除，否则需要单独存下来
-            if (v.isAdd) {
-              isAdd = true
-            }
-          })
-          if (!isAdd) {
-            //远程数据的删除记录下来
-            item[title][index].push({ dr: 1 })
-            let bodys = deletes[title] === undefined ? [] : deletes[title]
-            bodys.push(item[title][index])
-            deletes.push({ [title]: bodys })
-          }
-          item[title].splice(index, 1)
-        }
-      }
-    })
-    store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
-    this.setState({ dataSource })
-  }
-
-  /**
-   * 
-   * @param {审批意见} checkValue 
-   * @param {审批内容} content 
-   * @param {改派、加签人} checkUser 
-   */
-  onAlertClickSubmit = (checkValue, content, checkUser) => {
-    this.setState({ showAlert: false })
-    const { cuserid } = this.props
-    let pk = listItem.card_head['pk_nrna']
-    let action = 'approve'
-    //审批状态
-    let approve = ''
-    //审批意见
-    let opinion = content
-    //改派，加签人
-    let rgman = checkUser.value === undefined ? '' : checkUser.value
-    //驳回流程
-    let rejectActivity = ''
-    switch (checkValue) {
-      case '批准':
-        approve = 'Y'
-        break
-      case '不批准':
-        approve = 'N'
-        break
-      case '驳回':
-        approve = 'R'
-        //查流程
-        rejectActivity=''
-        break
-      case '改派':
-        approve = 'T'
-        break
-      case '加签':
-        approve = 'A'
-        break
-      default:
-        break
-    }
-    let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
-    getZPXQData(data).then(result => {
-      Toast.success(result.MESSAGE, 1, () => {
-        this.props.history.goBack()
-      })
-    })
-  }
-
-  onAlertClickCancel = () => {
-    this.setState({ showAlert: false })
-  }
-
-  //保存方法
-  async save() {
-    // const { dataSource } = this.state
-    // let head = {}, bodys = []
-
-    // card_head.forEach(v => {
-    //   let value = getValue(v)
-    //   //没有值则不传该字段,billno
-    //   if (value !== '' && v.code !== 'billno') {
-    //     head[v.code] = value
-    //   }
-    // })
-    // head['pk_nrna'] = item.card_head['pk_nrna']
-    // card_body.forEach(body => {
-    //   let item = {}
-    //   body.forEach(v => {
-    //     let value = getValue(v)
-    //     //没有值则不传该字段
-    //     if (value !== '') {
-    //       item[v.code] = value
-    //     }
-    //   })
-    //   bodys.push(item)
-    // })
-    // console.log(head);
-
-    // getZPXQData({ action: 'add', head, bodys }).then(result => {
-    //   console.log(result);
-    // })
-  }
-
   static getDerivedStateFromProps(props, state) {
+    const { listItem, propDataSource } = props
     let table = props.table
     if (!isEmpty(table)) {
-      props.propDataSource.forEach(item => {
-        for (let key in item) {
-          if (key === tableName) {
-            if (tableIndex === -1) {
-              item[tableName].push(table)
-            } else {
-              item[tableName][tableIndex] = table
-            }
+      //新增
+      if (tableIndex === -1) {
+        let obj = {}
+        table.forEach(item => {
+          if (item.code !== undefined) {
+            let value = getValue(item)
+            obj[item.code] = value
           }
-        }
-      })
+        })
+        obj.dr = 0
+        listItem[tableName].push(obj)
+
+        propDataSource.forEach(item => {
+          if (item[tableName] !== undefined) {
+            item[tableName].push(table)
+          }
+        })
+      }
+      // 编辑
+      else {
+        table.forEach(item => {
+          let value = getValue(item)
+          listItem[tableName][tableIndex][item.code] = value
+        })
+
+        propDataSource.forEach(item => {
+          if (item[tableName] !== undefined) {
+            item[tableName][tableIndex] = table
+          }
+        })
+      }
+
       //用完重置
-      tableName = ''
-      tableIndex = -1
       store.dispatch(addTodo('SET_DETAIL_Table', null))
-      store.dispatch(addTodo('SET_DETAIL_DataSource', props.propDataSource))
+      store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
+      store.dispatch(addTodo('SET_DETAIL_DataSource', propDataSource))
     }
-    return { dataSource: props.propDataSource }
+
+    return { dataSource: propDataSource }
   }
 
   componentDidMount() {
     const { dataSource } = this.state
-
     let element = document.getElementById('action');
     if (element !== null) {
       let height = document.documentElement.clientHeight - element.clientHeight;
       this.setState({ height })
     }
-
     if (dataSource.length === 0) {
-      this.getTemplate()
+      this.initTemplate()
     }
   }
 
   render() {
-    const { height, dataSource, showAlert } = this.state
+    const { listItem } = this.props
+    const { height, dataSource, showAlert, showSelect, selectData } = this.state
+    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
     return (
       <div style={{ position: 'relative' }}>
         <Alert
           showAlert={showAlert}
+          pk={pk}
           onAlertClickSubmit={this.onAlertClickSubmit}
-          onAlertClickCancel={this.onAlertClickCancel} />
+          onAlertClickCancel={() => this.setState({ showAlert: false })} />
+        <SelectView
+          show={showSelect}
+          dataSource={selectData}
+          onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
+          onClickMaskCallBack={() => this.setState({ showSelect: false })} />
         <div style={{ background: 'white', paddingTop: 10, overflow: 'scroll', height }}>
           {
             dataSource.map((items, bodyIndex) => {
@@ -367,14 +197,7 @@ class Detail extends Base {
                         <EditView
                           key={item.code}
                           index={index}
-                          // edit={location.state.edit}
-                          edit={true}
-                          title={item.label}
-                          value={getValue(item)}
-                          //参照编码
-                          define={item.define1}
-                          type={item.itemtype}
-                          hiddenLine={items[key].length - 1 === index}
+                          item={item}
                           onEditCallBack={this.onEditCallBack} />
                       )
                     })
@@ -401,13 +224,286 @@ class Detail extends Base {
       </div>
     )
   }
+
+  //----------------------------------------Menu----------------------------------------//
+  /**
+   * 初始底部按钮
+   * @returns 
+   */
+  initMenu() {
+    switch (this.props.flag) {
+      case 0:
+        return (
+          <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%' }}>
+            <TabbarButton
+              sectorMenuItems={['提交']}
+              style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+          </div>
+        )
+      case 1:
+        return (
+          <div id='action' style={{ position: 'fixed', bottom: 0, width: '100%', }}>
+            <TabbarButton
+              sectorMenuItems={['撤回']}
+              style={[{ flex: 1, padding: 10, borderRadius: 10, background: 'red' }]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+          </div>
+        )
+      case 2:
+        return (
+          <div id='action' style={{ display: 'flex', position: 'fixed', bottom: 0, width: '100%', }}>
+            <TabbarButton
+              sectorMenuItems={['审批']}
+              style={[{ flex: 1, padding: 10, borderRadius: 10, background: '#1296db' }]}
+              onClickTabbarButton={title => this.onClickTabbarButton(title)} />
+
+          </div>
+        )
+      case 3:
+        return (<div id='action' />)
+      default:
+        break;
+    }
+  }
+
+  /**
+   * 底部按钮响应事件
+   * @param {*} title 
+   */
+  onClickTabbarButton(title) {
+    const { cuserid, listItem } = this.props
+    let data = {}
+    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
+
+    switch (title) {
+      case '撤回':
+        data = { action: 'unapprove', pk, cuserid }
+        getZPXQData(data).then(result => {
+          Toast.success(result.MESSAGE, 1, () => {
+            this.props.history.goBack()
+          })
+        })
+        break;
+      case '提交':
+        data = { action: 'sendapprove', pk, cuserid }
+        this.save().then(result => {
+          // getZPXQData(data).then(result => {
+          //   Toast.success(result.MESSAGE, 1, () => {
+          //     this.props.history.goBack()
+          //   })
+          // })
+        })
+        break;
+      case '审批':
+        this.setState({ showAlert: true })
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
+   * 保存方法
+   */
+  async save() {
+    const { cuserid, listItem } = this.props
+
+    let temp = JSON.parse(JSON.stringify(listItem))
+    let card_head = JSON.parse(JSON.stringify(temp.card_head))
+    delete (listItem.card_head)
+    for (let key in card_head) {
+      if (typeof card_head[key] === 'object') {
+        if (card_head[key].pk === undefined) {
+          card_head[key] = card_head[key].value
+        } else {
+          card_head[key] = card_head[key].pk
+        }
+      }
+    }
+    for (let key in listItem) {
+      listItem[key].forEach(item => {
+        for (let bodyKey in item) {
+          if (typeof item[bodyKey] === 'object') {
+            if (item[bodyKey].pk === undefined) {
+              item[bodyKey] = item[bodyKey].value
+            } else {
+              item[bodyKey] = item[bodyKey].pk
+            }
+          }
+        }
+      })
+    }
+
+    for(let key in deletes) {
+      deletes[key].forEach(item => {
+        listItem[key].push(item)
+      })
+    }
+    console.log('e');
+    return await getZPXQData({ action: 'add', cuserid, head: card_head, bodys: listItem })
+  }
+
+  //----------------------------------------Table----------------------------------------//
+  /**
+   * 新增
+   * @param {*} value 
+   */
+  onTableAddLisenter = (value) => {
+    tableIndex = -1
+    tableName = value
+  }
+
+  /**
+   * 编辑
+   * @param {*} index 
+   * @param {*} value 
+   */
+  onTableEditLisenter = (index, value) => {
+    tableIndex = index
+    tableName = value
+  }
+
+  /**
+   * 删除
+   * @param {*} index 
+   * @param {表名} title 
+   */
+  onTableDeleteLisenter = (index, title) => {
+    const { listItem } = this.props
+    const { dataSource } = this.state
+
+
+    //有这个pk_nrna表示这列数据是远程数据
+    if (!isEmpty(listItem[title][index].pk_nrna)) {
+      listItem[title][index].dr = 1
+      let bodys = isEmpty(deletes.title) ? [] : deletes.title
+      bodys.push(listItem[title][index])
+      deletes[title] = bodys
+    }
+    //删除
+    listItem[title].splice(index, 1)
+    dataSource.forEach(item => {
+      if (!isEmpty(item[title])) {
+        item[title].splice(index, 1)
+      }
+    })
+
+    this.setState({ dataSource })
+    store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
+    store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
+  }
+
+  //----------------------------------------Edit----------------------------------------//
+  /**
+   * Edit回调
+   * @param {*} index 
+   * @param {*} value 
+   */
+  onEditCallBack = (index, value, code) => {
+    const { listItem } = this.props
+    //value如果是数组表示是选项
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        selectIndex = -1
+        Toast.info('暂无数据！', 1)
+      } else {
+        selectIndex = index
+        selectCode = code
+        this.setState({ showSelect: true, selectData: value })
+      }
+    } else {
+      const { dataSource } = this.state
+      dataSource.forEach(item => {
+        if (item.card_head !== undefined) {
+          item.card_head[index].value = value
+        }
+      })
+      listItem.card_head[code] = value
+      this.setState({ dataSource })
+      store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
+      store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
+    }
+  }
+
+  //----------------------------------------Select----------------------------------------
+  onSelectResultCallBack(item) {
+    const { listItem } = this.props
+    const { dataSource } = this.state
+    dataSource.forEach(v => {
+      let temp = v.card_head
+      if (temp !== undefined) {
+        temp[selectIndex].value = item
+      }
+    })
+    listItem.card_head[selectCode] = item.code
+    this.setState({ dataSource, showSelect: false })
+    store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
+    store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
+  }
+
+  //----------------------------------------Alert----------------------------------------//
+  /**
+   * 
+   * @param {审批意见} checkValue 
+   * @param {审批内容} content 
+   * @param {选中项目} pick 
+   */
+  onAlertClickSubmit = (checkValue, content, pick) => {
+    const { listItem } = this.props
+    this.setState({ showAlert: false })
+    const { cuserid } = this.props
+    let pk = listItem.card_head.pk_nrna
+    let action = 'approve'
+    //审批状态
+    let approve = ''
+    //审批意见
+    let opinion = content
+    //改派，加签人
+    let rgman = ''
+    //驳回流程
+    let rejectActivity = ''
+    switch (checkValue) {
+      case '批准':
+        approve = 'Y'
+        break
+      case '不批准':
+        approve = 'N'
+        break
+      case '驳回':
+        approve = 'R'
+        //查流程
+        rejectActivity = pick.value === undefined ? '' : pick.value
+        break
+      case '改派':
+        approve = 'T'
+        rgman = pick.value === undefined ? '' : pick.value
+        break
+      case '加签':
+        approve = 'A'
+        rgman = pick.value === undefined ? '' : pick.value
+        break
+      default:
+        break
+    }
+    let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
+    getZPXQData(data).then(result => {
+      Toast.success(result.MESSAGE, 1, () => {
+        this.props.history.goBack()
+      })
+    })
+  }
 }
 
 //映射函数(绑定属性在porps)
 const mapStateToProps = state => {
   return {
     cuserid: state.userModule.cuserid,
+    pk_group: state.userModule.cuserid,
+    pk_org: state.userModule.cuserid,
+
     flag: state.listModule.flag,
+    listItem: state.detailModule.baseDataSource,
     propDataSource: state.detailModule.dataSource,
     table: state.detailModule.table
   }

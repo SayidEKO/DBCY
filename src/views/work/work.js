@@ -3,8 +3,9 @@ import { withRouter } from "react-router-dom";
 
 import { Grid, Toast } from 'antd-mobile';
 
-import { menus } from "../../config";
 import { router2workTag } from '../../utils/routers';
+
+import { menus } from "../../config";
 
 class Work extends Base {
   constructor(props) {

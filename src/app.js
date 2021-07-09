@@ -18,7 +18,6 @@ import Detail from './views/work/detail/detail';
 import New from './views/work/new/new';
 import TableDetail from './views/common/tableDetail'
 
-import SelectView from './views/common/selectView'
 import ErrorPage from './views/common/errorPage'
 
 
@@ -42,8 +41,6 @@ function App() {
           <Route exact path='/work/customList/new' render={props => <New {...props} />}></Route>
 
           <Route exact path='/work/customList/tableDetail' render={props => <TableDetail {...props} />}></Route>
-
-          <Route exact path='/selectView' render={props => <SelectView {...props} />}></Route>
 
           <Route exact path='/404' render={props => <ErrorPage {...props}></ErrorPage>}></Route>
           <Redirect to="/404"></Redirect>

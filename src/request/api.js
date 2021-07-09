@@ -66,7 +66,6 @@ const ncBaseDataSynServlet = async (type, data, billtype) => {
     const result = await getToken();
     params.VERIFY = result.TonKen;
     store.dispatch(addTodo('SET_USER_TOKEN', result.TonKen))
-    store.dispatch(addTodo('SET_USER_CODE', result.VALUES[0].user_code))
     store.dispatch(addTodo('SET_USER_CUSERID', result.VALUES[0].cuserid))
     store.dispatch(addTodo('SET_USER_USERNAME', result.VALUES[0].user_name))
   } else {

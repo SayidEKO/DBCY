@@ -1,6 +1,5 @@
 import Base from '../base';
 import { withRouter } from "react-router-dom"
-
 import { Grid } from "antd-mobile";
 
 import { router2workTag } from '../../utils/routers';

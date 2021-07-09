@@ -1,5 +1,4 @@
 import { Component } from "react";
-import  "../config";
 
 export default class Base extends Component {
 

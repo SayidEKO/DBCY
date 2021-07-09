@@ -11,7 +11,9 @@ export const menus = {
         //列表节点
         funcode_list: '99H10101_wx_list',
         //详情节点
-        funcode_detail: '99H10101_wx_bc'
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        //单据类型
+        bill_type: { name: '招聘需求申请', code: '0001ZZZZ29EAC07A857A' }
       },
       {
         title: '招聘信息',
@@ -244,12 +246,15 @@ export const menus = {
 }
 
 //颜色
-export const color_button_blue = '#1296db'
+export const color_backgroup = '#F5F5F9'
+
+export const color_button_blue = '#418CE2'
 export const color_button_gray = 'gray'
 
 export const color_text_gray = '#888'
 export const color_text_black = '#fffff'
 export const color_text_blue = '#3B3568'
+export const color_text_red = 'red'
 
 
 export const color_line_gray = '#3B3568'

@@ -53,11 +53,6 @@ export function router2tableDetail(that, content) {
   that.props.history.push('/work/customList/tableDetail', content)
 } 
 
-//选项页面
-export function router2selectView(that, content) {
-  that.props.history.push('/selectView', content)
-} 
-
 //员工手册
 export function router2workerbook(that, content) {
   that.props.history.push('/workerbook', content)

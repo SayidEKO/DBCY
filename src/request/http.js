@@ -12,6 +12,8 @@ import { Toast } from 'antd-mobile';
 //   axios.defaults.baseURL = 'http://xj.vaiwan.com'
 // }
 
+Toast.config({duration:1, mask: false})
+
 //通过axios.defaults.timeout设置默认的请求超时时间。例如超过了30s，就会告知用户当前请求超时，请刷新等。
 axios.defaults.timeout = 30000;
 //post请求的时候，我们需要加上一个请求头，所以可以在这里进行一个默认的设置，即设置post的请求头为application/x-www-form-urlencoded;charset=UTF-8
@@ -24,6 +26,7 @@ axios.interceptors.request.use(config => {
   //文件上传接口不做处理
   if (config.url.indexOf('ncBaseDataSynServlet') !== -1) {
     config.data = JSON.stringify(config.data);
+    // config.data = qs.stringify(config.data);
     config.headers = { "Content-Type": "application/json" };
   }
   return config;
@@ -52,7 +55,7 @@ axios.interceptors.response.use(response => {
 
 //统一接口处理，返回数据
 export function http(fecth, url, param) {
-  Toast.loading('加载中...', 0)
+  Toast.loading('加载中...', 0, null, true)
   return new Promise((resolve, reject) => {
     switch (fecth) {
       case "get":

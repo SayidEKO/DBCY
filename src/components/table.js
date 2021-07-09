@@ -3,9 +3,11 @@
  */
 import { Component } from 'react'
 import { withRouter } from 'react-router-dom';
-import { color_text_blue, font_table_title, font_text_title } from '../config';
+
 import { router2tableDetail } from '../utils/routers';
-import { countStringWidth, getValue } from '../utils/utils';
+import { countStringWidth, getLabel } from '../utils/utils';
+
+import { color_text_blue, font_table_title, font_text_title } from '../config';
 
 
 //记录每个标签宽度
@@ -19,8 +21,7 @@ let widths = []
         //防止模版被修改
         let table = JSON.parse(JSON.stringify(templateSource))
         onTableAddLisenter(title)
-        //本地新增的给一个状态标记
-        router2tableDetail(this, { title, table, isAdd: true })
+        router2tableDetail(this, { title, table })
     }
 
     //删除
@@ -46,7 +47,7 @@ let widths = []
         tableSource.forEach(items => {
             //每一条数据
             items.forEach((item, index) => {
-                let tempWidth = countStringWidth(getValue(item))
+                let tempWidth = countStringWidth(getLabel(item))
                 //如果值的宽度大于标题的宽度就重新赋值
                 if (widths[index] < tempWidth) {
                     widths[index] = tempWidth
@@ -90,7 +91,7 @@ let widths = []
                                 <div key={'body' + parentIndex} style={{ display: 'flex' }}>
                                     {
                                         items.map((item, chiledIndex) => {
-                                            let value = getValue(item)
+                                            let value = getLabel(item)
                                             if (chiledIndex === items.length - 1) {
                                                 return (
                                                     <div key={'body' + parentIndex + chiledIndex} style={{ display: 'flex', padding: 5 }}>

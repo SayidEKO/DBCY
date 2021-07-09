@@ -4,27 +4,19 @@ import { Component } from 'react';
 export default class TabbarButton extends Component {
 
   getSectorJsx() {
-    const { sectorMenuItems, style } = this.props;
+    const { sectorMenuItems, style, onClickTabbarButton } = this.props;
 
     if (!sectorMenuItems || !Array.isArray(sectorMenuItems) || sectorMenuItems.length === 0) {
       return;
     }
 
-    return sectorMenuItems.map((item, i) => {
+    return sectorMenuItems.map((item, index) => {
       return (
-        <div key={i} onClick={() => this.onClickSectorMenuItem(i)} style={style[i]}>
+        <div key={item} onClick={() => onClickTabbarButton(item)} style={style[index]}>
           {item}
         </div>
       )
     });
-  }
-
-  onClickSectorMenuItem(index) {
-    const { sectorMenuItemFunctions, sectorMenuItems } = this.props;
-    if (!sectorMenuItemFunctions || typeof (sectorMenuItemFunctions[index]) !== 'function') {
-      return;
-    }
-    sectorMenuItemFunctions[index](sectorMenuItems[index]);
   }
 
   render() {

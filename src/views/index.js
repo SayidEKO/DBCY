@@ -5,8 +5,10 @@ import { Component } from 'react'
 import { connect } from "react-redux";
 import { withRouter } from 'react-router-dom'
 
-import { router2workerbook, router2work } from "../utils/routers";
 import { getWorkerBook } from '../request/api';
+
+import { router2workerbook, router2work } from "../utils/routers";
+
 import { DEBUG } from '../config';
 
 

@@ -4,15 +4,39 @@
  * @returns 
  */
 export function isEmpty(object) {
-  return object === null || object === undefined || object === '' ? true : false
+  if (object === null || object === undefined) {
+    return true
+  } else {
+    if (Array.isArray(object)) {
+      return object.length === 0
+    } else {
+      return object === ''
+    }
+  }
 }
 
 /**
- * 获取对象的值
+ * 获取对象的id
  * @param {*} object 
  * @returns 
  */
 export function getValue(object) {
+  if (typeof object.value === 'object') {
+    if (!isEmpty(object.value.label) && !isEmpty(object.value.value)) {
+      return object.value.value
+    }
+    return object.value.name === undefined ? '' : object.value.name
+  } else {
+    return object.value === undefined ? '' : object.value
+  }
+}
+
+/**
+ * 获取对象的名字
+ * @param {*} object 
+ * @returns 
+ */
+export function getLabel(object) {
   if (typeof object.value === 'object') {
     if (!isEmpty(object.value.label) && !isEmpty(object.value.value)) {
       return object.value.label
@@ -21,6 +45,31 @@ export function getValue(object) {
   } else {
     return object.value === undefined ? '' : object.value
   }
+}
+
+/**
+ * 格式化时间
+ * @param {*} format 
+ * @param {*} date 
+ */
+export function getFormatDate(format, date) {
+  let ret;
+  const opt = {
+    "Y+": date.getFullYear().toString(),        // 年
+    "m+": (date.getMonth() + 1).toString(),     // 月
+    "d+": date.getDate().toString(),            // 日
+    "H+": date.getHours().toString(),           // 时
+    "M+": date.getMinutes().toString(),         // 分
+    "S+": date.getSeconds().toString()          // 秒
+    // 有其他格式化字符需求可以继续添加，必须转化成字符串
+  };
+  for (let k in opt) {
+    ret = new RegExp("(" + k + ")").exec(format);
+    if (ret) {
+      format = format.replace(ret[1], (ret[1].length === 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+    };
+  };
+  return format;
 }
 
 /**
@@ -44,64 +93,6 @@ export function countStringWidth(value) {
   return width
 }
 
-//获取人（需要添加部门）
-// export function getUserData(data, checkUserData) {
-//   let obj = {}
-//   data.forEach(item => {
-//     if (item.psndoc === undefined) {
-//       getUserData(item.children, checkUserData)
-//     } else {
-//       item.psndoc.forEach(v => {
-//         obj = {
-//           value: v.cuserid,
-//           label: v.name
-//         }
-//         checkUserData.push(obj)
-//       })
-//     }
-//   })
-// }
-
-export function getUserData(data, checkUserData) {
-  let obj = {}
-  data.forEach(item => {
-    if (item.psndoc === undefined) {
-      getUserData(item.children, checkUserData)
-    } else {
-      item.psndoc.forEach(v => {
-        obj = {
-          value: v.cuserid,
-          label: v.name
-        }
-        checkUserData.push(obj)
-      })
-    }
-  })
-}
-
-/**
- * 获取部门
- * @param {*} arr 
- * @returns 
- */
-export function getDepartment(arr) {
-  const objs = [];
-  let obj = {};
-  arr.forEach(router => {
-    if (router.children) {
-      router.children = getDepartment(router.children);
-      const { id, name, children, psndoc } = router;
-      obj = {
-        value: id,
-        label: name,
-        psndoc: psndoc,
-        children: children
-      }
-    }
-    objs.push(obj);
-  })
-  return objs;
-}
 
 /**
  * 获取数组深度
@@ -129,4 +120,158 @@ export function getDeep(arr, depth) {
   } else {
     return depth;
   }
+}
+
+/**
+ * 检查数据
+ * @param {*} dataSource 
+ * @param {*} head 
+ * @param {*} bodys 
+ * @returns 
+ */
+export function checkData(dataSource, head, bodys) {
+  //检查数据
+  let hasError = false
+  dataSource.forEach(data => {
+    for (let key in data) {
+      if (key === 'card_head') {
+        let error = 0
+        data[key].forEach(item => {
+          let value = getValue(item)
+          //没有值则不传该字段，
+          if (isEmpty(value)) {
+            if (item.required === 'Y') {
+              item.hasError = true
+              error++
+            }
+          } else {
+            //修改选项的值
+            if (item.itemtype === 'radio') {
+              value = value === '是' ? 'Y' : 'N'
+            }
+            //新增不传billno
+            if (item.code !== 'billno') {
+              head[item.code] = value
+            }
+          }
+        })
+        if (error > 0) {
+          hasError = true
+        }
+      } else {
+        let error = 0
+        //存单张表
+        let objs = []
+        //遍历子表每一条数据
+        data[key].forEach(items => {
+          //存单条数据
+          let obj = {}
+          //遍历表每一个字段
+          items.forEach(item => {
+            let value = getValue(item)
+            //没有值则不传该字段，
+            if (isEmpty(value)) {
+              if (item.required === 'Y') {
+                item.hasError = true
+                error++
+              }
+            } else {
+              //修改选项的值
+              if (item.itemtype === 'radio') {
+                value = value === '是' ? 'Y' : 'N'
+              }
+              //新增不传billno
+              if (item.code !== 'billno') {
+                obj[item.code] = value
+              }
+            }
+          })
+          objs.push(obj)
+        })
+        bodys[key] = objs
+        if (error !== 0) {
+          hasError = true
+        }
+      }
+    }
+  })
+  return hasError
+}
+
+/**
+ * 获取人（需要添加部门）
+ * @param {*} data 
+ * @param {*} checkUserData 
+ */
+export function getUserData(data, checkUserData) {
+  let obj = {}
+  data.forEach(item => {
+    if (item.psndoc === undefined) {
+      getUserData(item.children, checkUserData)
+    } else {
+      item.psndoc.forEach(v => {
+        obj = {
+          value: v.cuserid,
+          label: v.name
+        }
+        checkUserData.push(obj)
+      })
+    }
+  })
+}
+
+//  export function getDepartment(arr) {
+//   const objs = [];
+//   let obj = {};
+//   arr.forEach(router => {
+//     if (router.children) {
+//       router.children = getDepartment(router.children);
+//       const { id, name, children, psndoc } = router;
+//       obj = {
+//         value: id,
+//         label: name,
+//         psndoc: psndoc,
+//         children: children
+//       }
+//     }
+//     objs.push(obj);
+//   })
+//   return objs;
+// }
+
+/**
+ * 获取部门
+ * @param {*} arr 
+ * @returns 
+ */
+export function getDepartment(arr) {
+  const objs = [];
+  let obj = {};
+  arr.forEach(router => {
+    if (router.children) {
+      if (router.psndoc && router.psndoc.length > 0) {
+        let objs = []
+        router.psndoc.forEach(item => {
+          let obj = {
+            value: item.cuserid,
+            label: item.name
+          }
+          objs.push(obj)
+        })
+        router.children = objs
+      } else {
+        router.children = getDepartment(router.children);
+      }
+
+      const { id, name, children, psndoc } = router;
+      obj = {
+        value: id,
+        label: name,
+        psndoc: psndoc,
+        children: children
+      }
+    }
+    objs.push(obj);
+  })
+  return objs;
 }
