@@ -145,10 +145,6 @@ export function checkData(dataSource, head, bodys) {
               error++
             }
           } else {
-            //修改选项的值
-            if (item.itemtype === 'radio') {
-              value = value === '是' ? 'Y' : 'N'
-            }
             //新增不传billno
             if (item.code !== 'billno') {
               head[item.code] = value
@@ -176,10 +172,6 @@ export function checkData(dataSource, head, bodys) {
                 error++
               }
             } else {
-              //修改选项的值
-              if (item.itemtype === 'radio') {
-                value = value === '是' ? 'Y' : 'N'
-              }
               //新增不传billno
               if (item.code !== 'billno') {
                 obj[item.code] = value

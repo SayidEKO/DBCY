@@ -17,26 +17,23 @@ export default class Alert extends Component {
     checkValue: '',
     //审批意见
     content: '',
-    tag: '',
     //选中项
     pick: {},
     //数据
     pickData: []
   }
 
-  onRadioClickCallBack(title) {
+  onRadioClickCallBack(value) {
     const { pk } = this.props
-    let tag = ''
     let pickData = []
-    if (title === '改派' || title === '加签') {
-      tag = title
+    if (value === 'T' || value === 'A') {
       getType([{ refertype: 'psndoc' }]).then(result => {
         if (result.VALUES.length > 0) {
           getUserData(result.VALUES, pickData)
-          this.setState({ tag, checkValue: title, pick: {}, pickData })
+          this.setState({ checkValue: value, pick: {}, pickData })
         }
       })
-    } else if ('驳回') {
+    } else if (value === 'R') {
       let cuserid = store.getState().userModule.cuserid
       let params = { action: 'return_approve', cuserid, pk, billtype: "ZPXQ" }
       getZPXQData(params).then(result => {
@@ -48,11 +45,11 @@ export default class Alert extends Component {
             }
             pickData.push(obj)
           })
-          this.setState({ tag, checkValue: title, pick: {}, pickData })
+          this.setState({ checkValue: value, pick: {}, pickData })
         }
       })
     } else {
-      this.setState({ tag, checkValue: title, pick: {}, pickData })
+      this.setState({ checkValue: value, pick: {}, pickData })
     }
   }
 
@@ -61,7 +58,7 @@ export default class Alert extends Component {
     const { onAlertClickSubmit } = this.props
     const { checkValue, content, pick } = this.state
     onAlertClickSubmit(checkValue, content, pick)
-    this.setState({ checkValue: '', pick: {}, content: '', tag: '' })
+    this.setState({ checkValue: '', pick: {}, content: ''})
   }
 
   //取消
@@ -82,7 +79,13 @@ export default class Alert extends Component {
 
   render() {
     const { showAlert } = this.props
-    const { pickData, checkValue, tag, pick, content } = this.state
+    const { pickData, checkValue, pick, content } = this.state
+    let tag = ''
+    if (checkValue === 'T') {
+      tag = '改派: '
+    }else if(checkValue === 'A') {
+      tag = '加签: '
+    }
     return (
       <div>
         <div style={{
@@ -107,23 +110,23 @@ export default class Alert extends Component {
             boxShadow: '0px 0px 5px #000'
           }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-              <Radio title='批准' checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
-              <Radio title='不批准' checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+              <Radio data={{ label: '批准', value: 'Y' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+              <Radio data={{ label: '不批准', value: 'N' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
               <Picker cols={1}
                 data={pickData}
                 onOk={(e) => this.onOk(e)}>
-                <Radio title='驳回' checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+                <Radio data={{ label: '驳回', value: 'R' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
               </Picker>
               <Picker cols={1}
                 data={pickData}
                 onOk={(e) => this.onOk(e)}>
-                <Radio title='改派' checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+                <Radio data={{ label: '改派', value: 'T' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
               </Picker>
               <Picker
                 cols={1}
                 data={pickData}
                 onOk={(e) => this.onOk(e)}>
-                <Radio title='加签' checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+                <Radio data={{ label: '加签', value: 'A' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
               </Picker>
             </div>
             <div style={{ border: '2px solid red', borderRadius: 5, margin: 10, fontSize: 8, color: 'red' }}>
@@ -135,9 +138,9 @@ export default class Alert extends Component {
                 onChange={e => this.setState({ content: e })}
                 style={{ fontSize: font_text_title }} />
             </div>
-            <div style={{ display: 'flex', width: '100%', color: color_text_blue }}>
-              <div style={{ display: checkValue === '改派' || checkValue === '加签' ? 'flex' : 'none', flex: 1, marginLeft: 10 }}>
-                <div>{tag + ':'}</div>
+            <div style={{ display: 'flex', width: '100%', color: color_text_blue, fontSize: font_text_title }}>
+              <div style={{ display: checkValue === 'T' || checkValue === 'A' ? 'flex' : 'none', flex: 1, marginLeft: 10 }}>
+                <div>{tag}</div>
                 <div style={{ marginLeft: 10 }}>{pick.label}</div>
               </div>
               <div style={{ display: 'flex', marginRight: 10, marginLeft: 'auto' }}>

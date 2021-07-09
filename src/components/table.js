@@ -5,7 +5,7 @@ import { Component } from 'react'
 import { withRouter } from 'react-router-dom';
 
 import { router2tableDetail } from '../utils/routers';
-import { countStringWidth, getLabel } from '../utils/utils';
+import { countStringWidth, getLabel, getValue } from '../utils/utils';
 
 import { color_text_blue, font_table_title, font_text_title } from '../config';
 
@@ -47,7 +47,11 @@ let widths = []
         tableSource.forEach(items => {
             //每一条数据
             items.forEach((item, index) => {
-                let tempWidth = countStringWidth(getLabel(item))
+                let value = getLabel(item)
+                if (item.itemtype === 'datepicker' || item.itemtype === 'datetimepicker') {
+                    value = value.split(' ')[0]
+                }
+                let tempWidth = countStringWidth(value)
                 //如果值的宽度大于标题的宽度就重新赋值
                 if (widths[index] < tempWidth) {
                     widths[index] = tempWidth
@@ -92,6 +96,9 @@ let widths = []
                                     {
                                         items.map((item, chiledIndex) => {
                                             let value = getLabel(item)
+                                            if (item.itemtype === 'datepicker' || item.itemtype === 'datetimepicker') {
+                                                value = value.split(' ')[0]
+                                            }
                                             if (chiledIndex === items.length - 1) {
                                                 return (
                                                     <div key={'body' + parentIndex + chiledIndex} style={{ display: 'flex', padding: 5 }}>

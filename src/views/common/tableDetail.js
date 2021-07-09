@@ -8,6 +8,7 @@ import SelectView from "../../components/selectView";
 import store, { addTodo } from '../../store/store';
 
 import { Toast } from 'antd-mobile';
+import { getValue } from '../../utils/utils';
 
 //记录选择字段的下标
 let selectIndex = -1
@@ -61,7 +62,7 @@ class TableDetail extends Base {
     }
 
     //----------------------------------------Edit----------------------------------------//
-    onEditCallBack = (index, value) => {
+    onEditCallBack = (index, value, code) => {
         if (Array.isArray(value)) {
             if (value.length === 0) {
                 selectIndex = -1

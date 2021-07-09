@@ -138,8 +138,7 @@ class Detail extends Base {
       // 编辑
       else {
         table.forEach(item => {
-          let value = getValue(item)
-          listItem[tableName][tableIndex][item.code] = value
+          listItem[tableName][tableIndex][item.code] = item.value
         })
 
         propDataSource.forEach(item => {
@@ -286,8 +285,9 @@ class Detail extends Base {
         })
         break;
       case '提交':
-        data = { action: 'sendapprove', pk, cuserid }
+        
         this.save().then(result => {
+          data = { action: 'sendapprove', pk, cuserid }
           getZPXQData(data).then(result => {
             Toast.success(result.MESSAGE, 1, () => {
               this.props.history.goBack()
@@ -311,7 +311,7 @@ class Detail extends Base {
 
     let temp = JSON.parse(JSON.stringify(listItem))
     let card_head = JSON.parse(JSON.stringify(temp.card_head))
-    delete (listItem.card_head)
+    delete (temp.card_head)
     for (let key in card_head) {
       if (typeof card_head[key] === 'object') {
         if (card_head[key].pk === undefined) {
@@ -321,8 +321,8 @@ class Detail extends Base {
         }
       }
     }
-    for (let key in listItem) {
-      listItem[key].forEach(item => {
+    for (let key in temp) {
+      temp[key].forEach(item => {
         for (let bodyKey in item) {
           if (typeof item[bodyKey] === 'object') {
             if (item[bodyKey].pk === undefined) {
@@ -338,10 +338,11 @@ class Detail extends Base {
     for(let key in deletes) {
       deletes[key].forEach(item => {
         listItem[key].push(item)
+        temp[key].push(item)
       })
     }
     console.log('e');
-    return await getZPXQData({ action: 'add', cuserid, head: card_head, bodys: listItem })
+    return await getZPXQData({ action: 'add', cuserid, head: card_head, bodys: temp })
   }
 
   //----------------------------------------Table----------------------------------------//
@@ -456,7 +457,7 @@ class Detail extends Base {
     let pk = listItem.card_head.pk_nrna
     let action = 'approve'
     //审批状态
-    let approve = ''
+    let approve = checkValue
     //审批意见
     let opinion = content
     //改派，加签人
@@ -464,23 +465,14 @@ class Detail extends Base {
     //驳回流程
     let rejectActivity = ''
     switch (checkValue) {
-      case '批准':
-        approve = 'Y'
-        break
-      case '不批准':
-        approve = 'N'
-        break
-      case '驳回':
-        approve = 'R'
+      case 'R':
         //查流程
         rejectActivity = pick.value === undefined ? '' : pick.value
         break
-      case '改派':
-        approve = 'T'
+      case 'T':
         rgman = pick.value === undefined ? '' : pick.value
         break
-      case '加签':
-        approve = 'A'
+      case 'A':
         rgman = pick.value === undefined ? '' : pick.value
         break
       default:

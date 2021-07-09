@@ -6,24 +6,18 @@ export default class Radio extends Component {
 
   static defaultProps = {
     edit: true,                 //是否可以编辑
-    title: '',                  //标题
-    checkValue: '是',           //选中值
+    data: {},                  //数据
+    checkValue: '',           //选中值
     onRadioClickCallBack: null  //回调
   }
 
   render() {
-    const { edit, title, checkValue, onRadioClickCallBack } = this.props
-    let temp = title === '是' ? 'Y' : 'N'
-    let value = ''
-    if (title === '是') {
-      value = 'Y'
-    }else if (title === '否') {
-      value = 'N'
-    }
+    const { edit, data, checkValue, onRadioClickCallBack } = this.props
+    
     return (
       <div onClick={this.props.onClick}>
         <div
-          onClick={() => onRadioClickCallBack(value)}
+          onClick={() => onRadioClickCallBack(data.value)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -32,8 +26,8 @@ export default class Radio extends Component {
             //pointerEvents禁止onClick事件
             pointerEvents: edit ? 'fill' : 'none'
           }}>
-          <input type='radio' checked={checkValue === title || checkValue === temp} onChange={() => { }} />
-          <div style={{ marginLeft: 5 }}>{title}</div>
+          <input type='radio' checked={checkValue === data.value } onChange={() => { }} />
+          <div style={{ marginLeft: 5 }}>{data.label}</div>
         </div>
       </div>
     )

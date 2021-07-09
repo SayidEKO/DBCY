@@ -20,10 +20,10 @@ export default class EditView extends Component {
     const { item } = this.props
     //标题
     let title = item.label
-    //值
-    let value = getLabel(item)
     //字段类型
     let type = item.itemtype
+    //值
+    let value = getLabel(item)
     //字段编码
     let code = item.code
     //参照编码
@@ -95,8 +95,8 @@ export default class EditView extends Component {
       case 'radio':
         return (
           <div style={{ display: 'flex', float: 'right' }}>
-            <Radio edit={canEdit} title='是' checkValue={value} onRadioClickCallBack={title => onEditCallBack(index, title, code)} />
-            <Radio edit={canEdit} title='否' checkValue={value} onRadioClickCallBack={title => onEditCallBack(index, title, code)} />
+            <Radio edit={canEdit} data={{ label: '是', value: 'Y' }} checkValue={value} onRadioClickCallBack={value => onEditCallBack(index, value, code)} />
+            <Radio edit={canEdit} data={{ label: '否', value: 'N' }} checkValue={value} onRadioClickCallBack={value => onEditCallBack(index, value, code)} />
           </div>
         )
       case 'refer':
