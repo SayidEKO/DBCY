@@ -14,10 +14,16 @@ export default class Radio extends Component {
   render() {
     const { edit, title, checkValue, onRadioClickCallBack } = this.props
     let temp = title === '是' ? 'Y' : 'N'
+    let value = ''
+    if (title === '是') {
+      value = 'Y'
+    }else if (title === '否') {
+      value = 'N'
+    }
     return (
       <div onClick={this.props.onClick}>
         <div
-          onClick={() => onRadioClickCallBack(title)}
+          onClick={() => onRadioClickCallBack(value)}
           style={{
             display: 'flex',
             alignItems: 'center',

@@ -288,11 +288,11 @@ class Detail extends Base {
       case '提交':
         data = { action: 'sendapprove', pk, cuserid }
         this.save().then(result => {
-          // getZPXQData(data).then(result => {
-          //   Toast.success(result.MESSAGE, 1, () => {
-          //     this.props.history.goBack()
-          //   })
-          // })
+          getZPXQData(data).then(result => {
+            Toast.success(result.MESSAGE, 1, () => {
+              this.props.history.goBack()
+            })
+          })
         })
         break;
       case '审批':
