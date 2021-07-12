@@ -56,4 +56,6 @@
 
 ### 3、然后运行`npm start`开启项目
 
-项目默认运行在`http://localhost:3000/`，可自行修改端口
+> Windows 上使用 `npm run start-win`
+
+项目默认运行在`http://localhost:8888/`，可自行修改端口

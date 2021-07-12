@@ -1,0 +1,33 @@
+.table {
+    border-collapse: separate;
+    background-color: rgb(242, 242, 242);
+}
+
+.table th,
+.table td {
+    padding: 0 2px;
+}
+
+.table-border{
+    border-width: 0px 1px 1px 0px;
+    border-right-style: solid;
+    border-right-color: rgb(219, 219, 219);
+    border-bottom-style: solid;
+    border-bottom-color: rgb(219, 219, 219);
+}
+
+.table-border th,
+.table-border td {
+    border-width: 1px 0px 0px 1px;
+    border-left-style: solid;
+    border-left-color: rgb(219, 219, 219);
+    border-top-style: solid;
+    border-top-color: rgb(219, 219, 219);
+}
+
+.table tr:nth-child(even) td {
+    background-color:rgb(242, 242, 242)
+}
+.table tr:nth-child(odd) td {
+    background-color:#fff
+}

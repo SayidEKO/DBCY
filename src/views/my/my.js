@@ -35,7 +35,7 @@ var menus = [
   },
   {
     title: '考勤查询',
-    url: ''
+    url: '/my/attendance'
   },
   {
     title: '社保查询',
@@ -63,8 +63,8 @@ class My extends Base {
     }
   }
 
-  onItemClick(title, user_code) {
-    switch (title) {
+  onItemClick(obj, user_code) {
+    switch (obj.title) {
       case '员工手册':
         getWorkerBook([{ user_code }]).then(result => {
           //签订地址
@@ -74,6 +74,9 @@ class My extends Base {
         break;
 
       default:
+        if (obj.url) {
+          this.props.history.push(obj.url, {title: obj.title});
+        }
         break;
     }
   }
@@ -123,7 +126,7 @@ class My extends Base {
                       thumb={<i className="iconfont icon-dingdan"></i>}
                       arrow="horizontal"
                       // extra={<Badge text={2} overflowCount={10}  />}
-                      onClick={() => this.onItemClick(obj.title, user_code)}>
+                      onClick={() => this.onItemClick(obj, user_code)}>
                       {obj.title}
                     </Item>
                   )

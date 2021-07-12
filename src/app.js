@@ -18,6 +18,8 @@ import Detail from './views/work/detail/detail';
 import New from './views/work/new/new';
 import TableDetail from './views/common/tableDetail'
 
+import MyAttendance from './views/my/attendance';
+
 import ErrorPage from './views/common/errorPage'
 
 
@@ -33,6 +35,7 @@ function App() {
           <Route exact path='/work' render={props => <Layout {...props}><Work /></Layout>} ></Route>
           <Route exact path='/add' render={props => <Layout {...props}><Add /></Layout>}></Route>
           <Route exact path='/my' render={props => <Layout {...props}><My /></Layout>}></Route>
+          <Route exact path='/my/attendance' render={props => <Layout {...props}><MyAttendance /></Layout>}></Route>
 
           <Route exact path='/work/workTag' render={props => <WorkTag {...props} />}></Route>
           <Route exact path='/work/workTag/workTagList' render={props => <WorkTagList {...props} />}></Route>
