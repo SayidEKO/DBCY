@@ -18,6 +18,8 @@ import { getTemplate, getZPXQData } from "../../request/api";
 import { router2detail, router2new } from "../../utils/routers";
 import { isEmpty } from "../../utils/utils";
 
+import Select from "../../components/select";
+
 
 const tabs = [
   { title: <Badge>待提交</Badge> },
@@ -34,6 +36,8 @@ let hasMore = true;
 let templateData = []
 //原数据
 let baseData = []
+
+let pk
 
 class WorkTagList extends Base {
 
@@ -54,6 +58,10 @@ class WorkTagList extends Base {
       search: false,
       //是否空数据提示
       empty: true,
+      //弹出窗数据
+      selectData: [],
+      //是否显示弹出窗
+      showSelect: false
     };
   }
 
@@ -95,12 +103,12 @@ class WorkTagList extends Base {
 
     let params = { action: 'index_query', cuserid, pk_group, pk_org, state: flag }
     let billtype = this.props.location.state.billtype
+    let pkName = this.props.location.state.pk_name
     getZPXQData(params, billtype).then(result => {
       baseData = result.VALUES
       if (!isEmpty(baseData)) {
         //遍历每一条数据
         baseData.forEach(item => {
-          let pk = ''
           //复制模版
           let template = JSON.parse(JSON.stringify(templateData))
           template.forEach(table => {
@@ -111,7 +119,7 @@ class WorkTagList extends Base {
               table.yqdata.forEach(word => {
                 word.value = item[table.code][word.code]
               })
-              pk = item[table.code].pk_nrna
+              pk = item[table.code][pkName]
             } else {
               //这里只取表体中的第一条数据用于展示
               let data = item[table.code][0]
@@ -137,16 +145,34 @@ class WorkTagList extends Base {
     })
   }
 
+  /**
+   * 获取弹出窗的数据
+   */
+  getSelectData() {
+    let billtype = this.props.location.state.billtype
+    let cuserid = store.getState().userModule.cuserid
+    let params = { action: 'return_approve', cuserid, pk, billtype }
+    getZPXQData(params, billtype).then(result => {
+      if (!isEmpty(result.VALUES)) {
+        this.setState({ selectData: result.VALUES, showSelect: true })
+      }
+    })
+  }
+
   componentDidMount() {
     this.state.height = this.state.height - ReactDOM.findDOMNode(this.tabs).offsetTop - 40
     this.initTemplate()
   }
 
   render() {
-    const { search, height, multiSelect, dataSource, empty } = this.state
+    const { search, height, multiSelect, dataSource, empty, showSelect, selectData } = this.state
     const { flag, startTime, endTime } = this.props
     return (
       <div>
+        <Select
+          show={showSelect}
+          dataSource={selectData}
+          onClickMaskCallBack={() => this.setState({ showSelect: false })} />
         <div style={{ display: multiSelect ? 'none' : 'flex', position: 'absolute', bottom: 20, right: 20, zIndex: 2 }}>
           <RingMneus
             sectorMenuItems={['新增', '编辑', '筛选']}
@@ -215,6 +241,7 @@ class WorkTagList extends Base {
       </div >
     )
   }
+
 
   /**
    * 初始化多选状态下的按钮
@@ -380,14 +407,13 @@ class WorkTagList extends Base {
    */
   rowItem = (rowData, sectionID, rowID) => {
     const { multiSelect } = this.state
-    let billtype = this.props.location.state.billtype
     return (
       <WorkTagListItem
         itemData={rowData}
         index={rowID}
-        billtype={billtype}
         multiSelect={multiSelect}
-        onItemClick={(index) => this.onItemClick(index)} />)
+        onItemClick={(index) => this.onItemClick(index)}
+        onItemButtonClick={() => this.getSelectData()} />)
   }
 
   /**

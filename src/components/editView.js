@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { DatePicker, Icon } from 'antd-mobile'
+import { DatePicker, Icon, Toast } from 'antd-mobile'
 
 import Radio from './radio';
 
@@ -144,6 +144,10 @@ export default class EditView extends Component {
           }
         });
       } else {
+        if (isEmpty(define)) {
+          Toast.fail('没有下拉选项', 1)
+          return
+        }
         let items = define.split(',')
         items.forEach(item => {
           let chars = item.split('=')

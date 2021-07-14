@@ -4,9 +4,9 @@ import { Badge, Tabs, Icon } from 'antd-mobile'
 
 import { getDeep } from '../utils/utils'
 
-import { color_button_blue, font_text_title } from '../config'
+import { font_text_title } from '../config'
 
-export default class SelectView extends Component {
+export default class SelectDepartment extends Component {
 
   static defaultProps = {
     dataSource: [],               //数据源
@@ -82,9 +82,9 @@ export default class SelectView extends Component {
           }}>
 
           <div>
-            <div style={{ display: 'flex', height: 50, float: 'right', alignItems: 'center', color: color_button_blue }}>
+            {/* <div style={{ display: 'flex', height: 50, float: 'right', alignItems: 'center', color: color_button_blue }}>
               <div onClick={e => this.onSearch()} style={{ marginRight: 10 }}>搜索</div>
-            </div>
+            </div> */}
             <Tabs
               tabs={tabs}
               page={Number(tableIndex)}

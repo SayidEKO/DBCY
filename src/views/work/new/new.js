@@ -7,7 +7,7 @@ import { Toast } from 'antd-mobile'
 import Table from '../../../components/table'
 import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
-import SelectView from "../../../components/selectView";
+import SelectDepartment from "../../../components/selectDepartment";
 
 
 import store, { addTodo } from '../../../store/store';
@@ -118,7 +118,7 @@ class New extends Base {
     const { height, dataSource, showSelect, selectData } = this.state
     return (
       <div style={{ background: 'white' }}>
-        <SelectView
+        <SelectDepartment
           show={showSelect}
           dataSource={selectData}
           onSelectResultCallBack={item => this.onSelectResultCallBack(item)}

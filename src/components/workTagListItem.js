@@ -1,30 +1,11 @@
 import { Component } from "react";
-import { Checkbox, Picker } from "antd-mobile";
+import { Checkbox } from "antd-mobile";
 
 import store from "../store/store";
 
 import { getLabel } from "../utils/utils";
 
-import { getZPXQData } from "../request/api";
-
-import { color_backgroup, color_button_blue, font_list_button_text, font_list_text, } from "../config";
-
-const CustomChildren = props => (
-  <div
-    style={{
-      float: 'right',
-      paddingLeft: 10,
-      paddingRight: 10,
-      paddingTop: 5,
-      paddingBottom: 5,
-      borderRadius: 5,
-      color: 'white',
-      background: color_button_blue
-    }}
-    onClick={props.onClick} >
-    {props.children}
-  </div>
-);
+import { color_backgroup, color_button_blue, font_list_text, } from "../config";
 
 export default class WorkTagListItem extends Component {
 
@@ -32,28 +13,10 @@ export default class WorkTagListItem extends Component {
     pickData: []
   }
 
-  getData(pk) {
-    const { billtype } = this.props
-    let pickData = []
-    let cuserid = store.getState().userModule.cuserid
-    let params = { action: 'return_approve', cuserid, pk, billtype }
-    getZPXQData(params, billtype).then(result => {
-      if (result.VALUES.length > 0) {
-        result.VALUES.forEach(item => {
-          let obj = {
-            value: item.activity_id,
-            label: item.approvestatus
-          }
-          pickData.push(obj)
-        })
-        this.setState({ pickData })
-      }
-    })
-  }
+  
 
   render() {
-    const { itemData, multiSelect, onItemClick, index } = this.props
-    const { pickData } = this.state
+    const { itemData, multiSelect, onItemClick, onItemButtonClick, index } = this.props
     let checked = itemData.checked
     let flag = store.getState().listModule.flag
     return (
@@ -64,7 +27,7 @@ export default class WorkTagListItem extends Component {
             display: 'flex',
             padding: 5,
             width: '100%',
-            alignItems:'center',
+            alignItems: 'center',
             borderRadius: 10,
             background: 'white'
           }}>
@@ -87,12 +50,20 @@ export default class WorkTagListItem extends Component {
           </div>
         </div>
         <div style={{ position: 'absolute', right: 15, display: flag === 0 ? 'none' : 'flex' }}>
-          <Picker
-            cols={1}
-            data={pickData}
-            style={{ fontSize: font_list_button_text }}>
-            <CustomChildren onClick={e => this.getData(itemData.pk)}>流程</CustomChildren>
-          </Picker>
+          <div
+            style={{
+              float: 'right',
+              paddingLeft: 10,
+              paddingRight: 10,
+              paddingTop: 5,
+              paddingBottom: 5,
+              borderRadius: 5,
+              color: 'white',
+              background: color_button_blue
+            }}
+            onClick={e => onItemButtonClick()} >
+            流程
+          </div>
         </div>
       </div>
 

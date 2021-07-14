@@ -1,14 +1,16 @@
 //弹出窗
 import { Component } from 'react'
-import { TextareaItem, Picker } from 'antd-mobile'
+import { TextareaItem } from 'antd-mobile'
 
 import Radio from './radio'
+import SelectPerson from "./selectPerson";
 
 import store from '../store/store'
-import { getUserData } from '../utils/utils'
+import { getDepartment } from '../utils/utils'
 import { getType, getZPXQData } from '../request/api'
 
 import { color_text_blue, font_text_title } from '../config'
+import Select from './select';
 
 export default class Alert extends Component {
 
@@ -20,36 +22,32 @@ export default class Alert extends Component {
     //选中项
     pick: {},
     //数据
-    pickData: []
+    selectData: [],
+    showSelect: false,
+    selectPersonData:[],
+    showSelectPerson: false
   }
 
   onRadioClickCallBack(value) {
-    const { pk, billName } = this.props
-    let pickData = []
+    const { pk, billtype } = this.props
+    let data = []
     if (value === 'T' || value === 'A') {
       getType([{ refertype: 'psndoc' }]).then(result => {
         if (result.VALUES.length > 0) {
-          getUserData(result.VALUES, pickData)
-          this.setState({ checkValue: value, pick: {}, pickData })
+          data = getDepartment(result.VALUES)
+          this.setState({ checkValue: value, pick: {}, selectPersonData: data, showSelectPerson: true })
         }
       })
     } else if (value === 'R') {
       let cuserid = store.getState().userModule.cuserid
-      let params = { action: 'return_approve', cuserid, pk, billtype: billName }
-      getZPXQData(params, billName).then(result => {
+      let params = { action: 'return_approve', cuserid, pk, billtype }
+      getZPXQData(params, billtype).then(result => {
         if (result.VALUES.length > 0) {
-          result.VALUES.forEach(item => {
-            let obj = {
-              value: item.activity_id,
-              label: item.approvestatus
-            }
-            pickData.push(obj)
-          })
-          this.setState({ checkValue: value, pick: {}, pickData })
+          this.setState({ checkValue: value, pick: {}, selectData:result.VALUES, showSelect: true })
         }
       })
     } else {
-      this.setState({ checkValue: value, pick: {}, pickData })
+      this.setState({ checkValue: value, pick: {} })
     }
   }
 
@@ -58,40 +56,34 @@ export default class Alert extends Component {
     const { onAlertClickSubmit } = this.props
     const { checkValue, content, pick } = this.state
     onAlertClickSubmit(checkValue, content, pick)
-    this.setState({ checkValue: '', pick: {}, content: ''})
-  }
-
-  //取消
-  onCancel() {
-    const { onAlertClickCancel } = this.props
-    onAlertClickCancel()
-  }
-
-  //参照选中
-  onOk(e) {
-    const { pickData } = this.state
-    pickData.forEach(item => {
-      if (item.value === e[0]) {
-        this.setState({ pick: item })
-      }
-    })
+    this.setState({ checkValue: '', pick: {}, content: '' })
   }
 
   render() {
-    const { showAlert } = this.props
-    const { pickData, checkValue, pick, content } = this.state
+    const { showAlert, onAlertClickCancel } = this.props
+    const { checkValue, pick, content, showSelect, showSelectPerson, selectData, selectPersonData } = this.state
     let tag = ''
     if (checkValue === 'T') {
       tag = '改派: '
-    }else if(checkValue === 'A') {
+    } else if (checkValue === 'A') {
       tag = '加签: '
     }
     return (
       <div>
+        <SelectPerson
+          show={showSelectPerson}
+          dataSource={selectPersonData}
+          onSelectResultCallBack={item => this.setState({ pick: item, showSelectPerson: false })}
+          onClickMaskCallBack={() => this.setState({ showSelectPerson: false })} />
+        <Select
+          show={showSelect}
+          dataSource={selectData}
+          onSelectResultCallBack={item => this.setState({ pick: item, showSelect: false })}
+          onClickMaskCallBack={() => this.setState({ showSelect: false })} />
         <div style={{
           display: showAlert ? 'flex' : 'none',
           position: 'absolute',
-          zIndex: 10,
+          zIndex: 5,
           width: '100%',
           height: '100vh',
           alignItems: 'center',
@@ -99,7 +91,9 @@ export default class Alert extends Component {
         }}
         >
           {/* 蒙板 */}
-          <div style={{ position: 'absolute', width: '100%', height: '100%', opacity: .5, background: 'lightGray' }} />
+          <div 
+          onClick={e => onAlertClickCancel()}
+          style={{ position: 'absolute', width: '100%', height: '100%', opacity: .5, background: 'lightGray' }} />
           {/* 内容 */}
           <div style={{
             position: 'absolute',
@@ -112,22 +106,9 @@ export default class Alert extends Component {
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
               <Radio data={{ label: '批准', value: 'Y' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
               <Radio data={{ label: '不批准', value: 'N' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
-              <Picker cols={1}
-                data={pickData}
-                onOk={(e) => this.onOk(e)}>
-                <Radio data={{ label: '驳回', value: 'R' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
-              </Picker>
-              <Picker cols={1}
-                data={pickData}
-                onOk={(e) => this.onOk(e)}>
-                <Radio data={{ label: '改派', value: 'T' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
-              </Picker>
-              <Picker
-                cols={1}
-                data={pickData}
-                onOk={(e) => this.onOk(e)}>
-                <Radio data={{ label: '加签', value: 'A' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
-              </Picker>
+              <Radio data={{ label: '驳回', value: 'R' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+              <Radio data={{ label: '改派', value: 'T' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
+              <Radio data={{ label: '加签', value: 'A' }} checkValue={checkValue} onRadioClickCallBack={(title) => this.onRadioClickCallBack(title)} />
             </div>
             <div style={{ border: '2px solid red', borderRadius: 5, margin: 10, fontSize: 8, color: 'red' }}>
               <TextareaItem
@@ -141,11 +122,11 @@ export default class Alert extends Component {
             <div style={{ display: 'flex', width: '100%', color: color_text_blue, fontSize: font_text_title }}>
               <div style={{ display: checkValue === 'T' || checkValue === 'A' ? 'flex' : 'none', flex: 1, marginLeft: 10 }}>
                 <div>{tag}</div>
-                <div style={{ marginLeft: 10 }}>{pick.label}</div>
+                <div style={{ marginLeft: 10 }}>{pick.name}</div>
               </div>
               <div style={{ display: 'flex', marginRight: 10, marginLeft: 'auto' }}>
                 <button style={{ marginRight: 10 }} onClick={() => this.onSubmit()} >确定</button>
-                <button onClick={() => this.onCancel()}>取消</button>
+                <button onClick={() => onAlertClickCancel()}>取消</button>
               </div>
             </div>
           </div>

@@ -6,6 +6,8 @@ export const menus = {
       {
         //小标题
         title: '招聘需求申请',
+        //用于获取pk
+        pk_name:'pk_nrna',
         //列表节点
         funcode_list: '99H10101_wx_list',
         //详情节点
@@ -23,6 +25,7 @@ export const menus = {
       },
       {
         title: '入职信息',
+        pk_name:'pk_entry',
         funcode_list: '99H00107_wx_list',
         funcode_detail: { save: '99H00107_wx_bc', audit: '99H00107_wx_xq' },
         billtype: 'RZXX',
@@ -268,4 +271,4 @@ export const font_text_title = 10
 export const font_table_title = 16
 
 //环境切换
-export const DEBUG = true
+export const DEBUG = false

@@ -124,6 +124,31 @@ export function getDeep(arr, depth) {
   }
 }
 
+
+/**
+ * 获取部门
+ * @param {*} arr 
+ * @returns 
+ */
+ export function getDepartment(arr) {
+  const objs = [];
+  let obj = {};
+  arr.forEach(router => {
+    if (router.children) {
+      router.children = getDepartment(router.children);
+      const { id, name, children, psndoc } = router;
+      obj = {
+        value: id,
+        label: name,
+        psndoc: psndoc,
+        children: children
+      }
+    }
+    objs.push(obj);
+  })
+  return objs;
+}
+
 /**
  * 检查数据
  * @param {*} dataSource 
@@ -183,82 +208,4 @@ export function checkData(dataSource, head, bodys) {
     }
   })
   return isOk
-}
-
-/**
- * 获取人（需要添加部门）
- * @param {*} data 
- * @param {*} checkUserData 
- */
-export function getUserData(data, checkUserData) {
-  let obj = {}
-  data.forEach(item => {
-    if (item.psndoc === undefined) {
-      getUserData(item.children, checkUserData)
-    } else {
-      item.psndoc.forEach(v => {
-        obj = {
-          value: v.cuserid,
-          label: v.name
-        }
-        checkUserData.push(obj)
-      })
-    }
-  })
-}
-
-//  export function getDepartment(arr) {
-//   const objs = [];
-//   let obj = {};
-//   arr.forEach(router => {
-//     if (router.children) {
-//       router.children = getDepartment(router.children);
-//       const { id, name, children, psndoc } = router;
-//       obj = {
-//         value: id,
-//         label: name,
-//         psndoc: psndoc,
-//         children: children
-//       }
-//     }
-//     objs.push(obj);
-//   })
-//   return objs;
-// }
-
-/**
- * 获取部门
- * @param {*} arr 
- * @returns 
- */
-export function getDepartment(arr) {
-  const objs = [];
-  let obj = {};
-  arr.forEach(router => {
-    if (router.children) {
-      if (router.psndoc && router.psndoc.length > 0) {
-        let objs = []
-        router.psndoc.forEach(item => {
-          let obj = {
-            value: item.cuserid,
-            label: item.name
-          }
-          objs.push(obj)
-        })
-        router.children = objs
-      } else {
-        router.children = getDepartment(router.children);
-      }
-
-      const { id, name, children, psndoc } = router;
-      obj = {
-        value: id,
-        label: name,
-        psndoc: psndoc,
-        children: children
-      }
-    }
-    objs.push(obj);
-  })
-  return objs;
 }

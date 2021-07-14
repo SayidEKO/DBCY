@@ -6,7 +6,7 @@ import { Toast } from 'antd-mobile'
 
 import Table from '../../../components/table'
 import Alert from '../../../components/alert'
-import SelectView from "../../../components/selectView";
+import SelectDepartment from "../../../components/selectDepartment";
 import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
 
@@ -22,6 +22,8 @@ let templateData = []
 let deletes = {}
 //记录选择字段的下标
 let selectIndex = -1
+
+let pk
 
 class Detail extends Base {
 
@@ -47,6 +49,7 @@ class Detail extends Base {
     let billtype = this.props.location.state.billtype
     let save = this.props.location.state.funcode_detail.save
     let audit = this.props.location.state.funcode_detail.audit
+    let pkName = this.props.location.state.pk_name
     //flag（2： 审批）
     let funcode = flag === 2 ? audit : save
 
@@ -66,6 +69,7 @@ class Detail extends Base {
               word.value = listItem[table.code][word.code]
               word.hasError = false
             })
+            pk = listItem[table.code][pkName]
           } else {
             let bodys = listItem[table.code]
             let objs = []
@@ -145,19 +149,17 @@ class Detail extends Base {
   }
 
   render() {
-    const { listItem } = this.props
     const { height, dataSource, showAlert, showSelect, selectData } = this.state
-    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
-    let billName = this.props.location.state.bill_name
+    let billtype = this.props.location.state.billtype
     return (
       <div style={{ position: 'relative' }}>
         <Alert
           showAlert={showAlert}
           pk={pk}
-          billName={billName}
+          billtype={billtype}
           onAlertClickSubmit={this.onAlertClickSubmit}
           onAlertClickCancel={() => this.setState({ showAlert: false })} />
-        <SelectView
+        <SelectDepartment
           show={showSelect}
           dataSource={selectData}
           onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
@@ -243,9 +245,8 @@ class Detail extends Base {
    * @param {*} title 
    */
   onClickTabbarButton(title) {
-    const { cuserid, listItem } = this.props
+    const { cuserid } = this.props
     let data = {}
-    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
     let billtype = this.props.location.state.billtype
     switch (title) {
       case '撤回':
@@ -257,7 +258,6 @@ class Detail extends Base {
         })
         break;
       case '提交':
-
         this.save().then(result => {
           data = { action: 'sendapprove', pk, cuserid }
           getZPXQData(data, billtype).then(result => {
@@ -281,7 +281,6 @@ class Detail extends Base {
   async save() {
     const { cuserid, listItem } = this.props
     const { dataSource } = this.state
-
 
     let head, bodys = {}
     dataSource.forEach(table => {
@@ -334,8 +333,9 @@ class Detail extends Base {
   onTableDeleteLisenter = (index, code) => {
     const { listItem } = this.props
     const { dataSource } = this.state
-    //有这个pk_nrna表示这列数据是远程数据
-    if (!isEmpty(listItem[code][index].pk_nrna)) {
+    let pkName = this.props.location.state.pk_name
+    //有这个pk表示这列数据是远程数据
+    if (!isEmpty(listItem[code][index][pkName])) {
       listItem[code][index].dr = 1
       let bodys = isEmpty(deletes.title) ? [] : deletes.title
       bodys.push(listItem[code][index])
@@ -373,11 +373,12 @@ class Detail extends Base {
     } else {
       const { dataSource } = this.state
       dataSource.forEach(item => {
-        if (item.card_head !== undefined) {
-          item.card_head[index].value = value
+        if (item.yqpx === '1') {
+          item.yqdata[index].value = value
+          listItem[item.code][code] = value
         }
       })
-      listItem.card_head[code] = value
+      
       this.setState({ dataSource })
       store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
       store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
@@ -392,7 +393,7 @@ class Detail extends Base {
       if (table.yqpx === '1') {
         let word = table.yqdata[selectIndex]
         word.value = item
-        listItem[table.code][word.code] = item.value
+        listItem[table.code][word.code] = item.activity_id
       }
     })
     this.setState({ dataSource, showSelect: false })
@@ -402,16 +403,14 @@ class Detail extends Base {
 
   //----------------------------------------Alert----------------------------------------//
   /**
-   * 
+   * 审批
    * @param {审批意见} checkValue 
    * @param {审批内容} content 
    * @param {选中项目} pick 
    */
   onAlertClickSubmit = (checkValue, content, pick) => {
-    const { listItem } = this.props
     this.setState({ showAlert: false })
     const { cuserid } = this.props
-    let pk = listItem.card_head.pk_nrna
     let action = 'approve'
     //审批状态
     let approve = checkValue
@@ -424,13 +423,13 @@ class Detail extends Base {
     switch (checkValue) {
       case 'R':
         //查流程
-        rejectActivity = pick.value === undefined ? '' : pick.value
+        rejectActivity = pick.activity_id === undefined ? '' : pick.activity_id
         break
       case 'T':
-        rgman = pick.value === undefined ? '' : pick.value
+        rgman = pick.cuserid === undefined ? '' : pick.cuserid
         break
       case 'A':
-        rgman = pick.value === undefined ? '' : pick.value
+        rgman = pick.cuserid === undefined ? '' : pick.cuserid
         break
       default:
         break
