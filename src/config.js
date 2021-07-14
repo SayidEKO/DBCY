@@ -6,14 +6,14 @@ export const menus = {
       {
         //小标题
         title: '招聘需求申请',
-        //表
-        table: ['card_head', 'card_body'],
         //列表节点
         funcode_list: '99H10101_wx_list',
         //详情节点
         funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
         //单据类型
-        bill_type: { name: '招聘需求申请', code: '0001ZZZZ29EAC07A857A' }
+        billtype: 'ZPXQ',
+        //单据类型值
+        bill: { name: '招聘需求申请', code: '0001ZZZZ29EAC07A857A' }
       },
       {
         title: '招聘信息',
@@ -23,9 +23,10 @@ export const menus = {
       },
       {
         title: '入职信息',
-        table: ['card_head', 'card_body'],
-        funcode_list: '99H10101_wx_list',
-        funcode_detail: '99H10101_wx_bc'
+        funcode_list: '99H00107_wx_list',
+        funcode_detail: { save: '99H00107_wx_bc', audit: '99H00107_wx_xq' },
+        billtype: 'RZXX',
+        bill: { name: '入职信息', code: 'RZXX' }
       },
       {
         title: '人员合同管理',
@@ -258,6 +259,10 @@ export const color_text_red = 'red'
 
 
 export const color_line_gray = '#3B3568'
+
+//
+export const font_list_text = 12
+export const font_list_button_text = 12
 
 export const font_text_title = 10
 export const font_table_title = 16

@@ -3,13 +3,15 @@
  * @param {*} object 
  * @returns 
  */
-export function isEmpty(object) {
+ export function isEmpty(object) {
   if (object === null || object === undefined) {
     return true
   } else {
     if (Array.isArray(object)) {
       return object.length === 0
-    } else {
+    } else if (JSON.stringify(object) === '{}') {
+      return true
+    }else{
       return object === ''
     }
   }
@@ -127,67 +129,60 @@ export function getDeep(arr, depth) {
  * @param {*} dataSource 
  * @param {*} head 
  * @param {*} bodys 
- * @returns 
+ * @returns true没有错误
  */
 export function checkData(dataSource, head, bodys) {
   //检查数据
-  let hasError = false
-  dataSource.forEach(data => {
-    for (let key in data) {
-      if (key === 'card_head') {
-        let error = 0
-        data[key].forEach(item => {
+  let isOk = true
+
+  dataSource.forEach(table => {
+    if (table.yqpx === '1') {
+      table.yqdata.forEach(item => {
+        let value = getValue(item)
+        //没有值则不传该字段，
+        if (isEmpty(value)) {
+          if (item.required === 'Y') {
+            item.hasError = true
+            isOk = false
+          }
+        } else {
+          //新增不传billno
+          if (item.code !== 'billno') {
+            head[item.code] = value
+          }
+        }
+      })
+    } else {
+      //存单张表
+      let objs = []
+      //遍历子表每一条数据
+      table.yqdata.forEach(items => {
+        //存单条数据
+        let obj = {}
+        //遍历表每一个字段
+        items.forEach(item => {
           let value = getValue(item)
           //没有值则不传该字段，
           if (isEmpty(value)) {
             if (item.required === 'Y') {
               item.hasError = true
-              error++
+              isOk = false
             }
           } else {
             //新增不传billno
             if (item.code !== 'billno') {
-              head[item.code] = value
+              obj[item.code] = value
             }
           }
         })
-        if (error > 0) {
-          hasError = true
-        }
-      } else {
-        let error = 0
-        //存单张表
-        let objs = []
-        //遍历子表每一条数据
-        data[key].forEach(items => {
-          //存单条数据
-          let obj = {}
-          //遍历表每一个字段
-          items.forEach(item => {
-            let value = getValue(item)
-            //没有值则不传该字段，
-            if (isEmpty(value)) {
-              if (item.required === 'Y') {
-                item.hasError = true
-                error++
-              }
-            } else {
-              //新增不传billno
-              if (item.code !== 'billno') {
-                obj[item.code] = value
-              }
-            }
-          })
-          objs.push(obj)
-        })
-        bodys[key] = objs
-        if (error !== 0) {
-          hasError = true
-        }
+        objs.push(obj)
+      })
+      if (objs.length > 0) {
+        bodys[table.code] = objs
       }
     }
   })
-  return hasError
+  return isOk
 }
 
 /**

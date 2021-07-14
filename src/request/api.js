@@ -38,7 +38,9 @@ export const uploadFile = async (file, pk = '1001ZZ10000000009EQY') => {
   formData.append('TYPE', 11)
   formData.append('KEY', 'wdhl')
   formData.append('SID', Math.floor(Math.random() * (100)))
-  formData.append('billtype', 'ZPXQ')
+  //修改
+  let billName = 'ZPXQ'
+  formData.append('billtype', billName)
   formData.append('SRCSYS', '企业微信')
   formData.append('pk', pk)
   formData.append('file', file)
@@ -80,8 +82,8 @@ const ncBaseDataSynServlet = async (type, data, billtype) => {
  * @param {*} param 
  * @returns 
  */
-export async function getTemplate(param) {
-  return await ncBaseDataSynServlet(1, param, 'ZPXQ')
+export async function getTemplate(param, billtype) {
+  return await ncBaseDataSynServlet(1, param, billtype)
 }
 
 /**
@@ -89,8 +91,8 @@ export async function getTemplate(param) {
  * @param {*} param 
  * @returns 
  */
-export async function getZPXQData(param) {
-  return await ncBaseDataSynServlet(3, param, 'ZPXQ')
+export async function getZPXQData(param, billtype) {
+  return await ncBaseDataSynServlet(3, param, billtype)
 }
 
 /**

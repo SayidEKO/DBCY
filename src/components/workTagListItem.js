@@ -7,7 +7,7 @@ import { getLabel } from "../utils/utils";
 
 import { getZPXQData } from "../request/api";
 
-import { color_backgroup, color_button_blue, font_text_title, } from "../config";
+import { color_backgroup, color_button_blue, font_list_button_text, font_list_text, } from "../config";
 
 const CustomChildren = props => (
   <div
@@ -33,10 +33,11 @@ export default class WorkTagListItem extends Component {
   }
 
   getData(pk) {
+    const { billtype } = this.props
     let pickData = []
     let cuserid = store.getState().userModule.cuserid
-    let params = { action: 'return_approve', cuserid, pk, billtype: "ZPXQ" }
-    getZPXQData(params).then(result => {
+    let params = { action: 'return_approve', cuserid, pk, billtype }
+    getZPXQData(params, billtype).then(result => {
       if (result.VALUES.length > 0) {
         result.VALUES.forEach(item => {
           let obj = {
@@ -57,27 +58,29 @@ export default class WorkTagListItem extends Component {
     let flag = store.getState().listModule.flag
     return (
       <div style={{ display: 'flex', alignItems: 'center', background: color_backgroup, padding: 5 }}>
-        <div style={{ display: 'flex', padding: 5, width: '100%', background: 'white', borderRadius: 10 }}
-          onClick={e => onItemClick(index)}>
+        <div
+          onClick={e => onItemClick(index)}
+          style={{
+            display: 'flex',
+            padding: 5,
+            width: '100%',
+            alignItems:'center',
+            borderRadius: 10,
+            background: 'white'
+          }}>
           <Checkbox checked={checked} style={{ display: multiSelect ? 'flex' : 'none', padding: 5 }} />
           <div style={{ width: '100%' }}>
             {
-              itemData.data.card_head.map((item, index) => {
+              itemData.data.map(table => {
                 return (
-                  <div key={index} style={{ display: 'flex', fontSize: 12 }}>
-                    <div style={{ padding: 5 }}>{item.label}:</div>
-                    <div style={{ padding: 5, color: 'gray' }}>{getLabel(item)}</div>
-                  </div>
-                )
-              })
-            }
-            {
-              itemData.data.card_body.map((item, index) => {
-                return (
-                  <div key={index} style={{ display: 'flex', fontSize: 12 }}>
-                    <div style={{ padding: 5 }}>{item.label}:</div>
-                    <div style={{ padding: 5, color: 'gray' }}>{getLabel(item)}</div>
-                  </div>
+                  table.yqdata.map((word, index) => {
+                    return (
+                      <div key={table.code + index} style={{ display: 'flex', fontSize: font_list_text }}>
+                        <div style={{ padding: 5 }}>{word.label}:</div>
+                        <div style={{ padding: 5, color: 'gray' }}>{getLabel(word)}</div>
+                      </div>
+                    )
+                  })
                 )
               })
             }
@@ -87,7 +90,7 @@ export default class WorkTagListItem extends Component {
           <Picker
             cols={1}
             data={pickData}
-            style={{ fontSize: font_text_title }}>
+            style={{ fontSize: font_list_button_text }}>
             <CustomChildren onClick={e => this.getData(itemData.pk)}>流程</CustomChildren>
           </Picker>
         </div>

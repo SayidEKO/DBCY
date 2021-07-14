@@ -16,6 +16,7 @@ import store, { addTodo } from "../../store/store";
 import { getTemplate, getZPXQData } from "../../request/api";
 
 import { router2detail, router2new } from "../../utils/routers";
+import { isEmpty } from "../../utils/utils";
 
 
 const tabs = [
@@ -30,7 +31,7 @@ let _page = 0;
 //是否还有数据
 let hasMore = true;
 //模版
-let template = {}
+let templateData = []
 //原数据
 let baseData = []
 
@@ -38,11 +39,11 @@ class WorkTagList extends Base {
 
   constructor(props) {
     super(props)
-    const listData = new ListView.DataSource({ rowHasChanged: (row1, row2) => row1 !== row2 });
+    const dataSource = new ListView.DataSource({ rowHasChanged: (row1, row2) => row1 !== row2 });
     this.state = {
       height: document.documentElement.clientHeight,
       //数据源
-      listData,
+      dataSource,
       //加载状态
       isLoading: true,
       //刷新状态
@@ -57,89 +58,92 @@ class WorkTagList extends Base {
   }
 
   /**
+   * 初始化模板
+   * @returns 
+   */
+  initTemplate() {
+    //获取列表节点
+    let funcode = this.props.location.state.funcode_list
+    let billtype = this.props.location.state.billtype
+    getTemplate([{ funcode }], billtype).then(result => {
+      if (!isEmpty(result.VALUES)) {
+        templateData = result.VALUES
+        //表排序
+        templateData.sort((a, b) => { return a.yqpx - b.yqpx })
+        this.getData(_page = 0)
+      }
+    })
+  }
+
+  /**
    * 获取数据
    * @param {页数} page 
    */
-  getData(page = 0) {
+  getData(page) {
     const { cuserid, pk_group, pk_org, flag } = this.props
-    const { listData } = this.state
+    const { dataSource } = this.state
     let data = [], number = 10
-    if (listData._dataBlob !== null) {
-      data = listData._dataBlob.s1
+    //如果模板没有数据则获取模板
+    if (isEmpty(templateData)) {
+      this.initTemplate()
+      return
+    }
+
+    if (dataSource._dataBlob !== null) {
+      data = dataSource._dataBlob.s1
     }
 
     let params = { action: 'index_query', cuserid, pk_group, pk_org, state: flag }
-    getZPXQData(params).then(result => {
+    let billtype = this.props.location.state.billtype
+    getZPXQData(params, billtype).then(result => {
       baseData = result.VALUES
-      baseData.forEach(v => {
-        let head = v.card_head
-        let bodys = v.card_body
-        //复制模版
-        let temp = JSON.parse(JSON.stringify(template))
-
-        if (head !== undefined) {
-          //遍历表头设值
-          for (let key in head) {
-            temp.card_head.forEach(v => {
-              if (v.code === key) {
-                v.value = head[key]
-              }
-            })
-          }
-        }
-
-        if (bodys !== undefined) {
-          //遍历表体设值
-          bodys.forEach(body => {
-            for (let key in body) {
-              temp.card_body.forEach(v => {
-                if (v.code === key) {
-                  v.value = body[key]
-                }
+      if (!isEmpty(baseData)) {
+        //遍历每一条数据
+        baseData.forEach(item => {
+          let pk = ''
+          //复制模版
+          let template = JSON.parse(JSON.stringify(templateData))
+          template.forEach(table => {
+            //字段排序
+            table.yqdata.sort((a, b) => { return a.position - b.position })
+            if (table.yqpx === '1') {
+              //遍历模版表头字段
+              table.yqdata.forEach(word => {
+                word.value = item[table.code][word.code]
               })
+              pk = item[table.code].pk_nrna
+            } else {
+              //这里只取表体中的第一条数据用于展示
+              let data = item[table.code][0]
+              if (!isEmpty(data)) {
+                table.yqdata.forEach(word => {
+                  word.value = data[word.code]
+                })
+              }
             }
           })
-        }
-        //重新组装的数据
-        let item = {}
-        //添加选中状态
-        item.checked = false
-        //设置pk
-        item.pk = head.pk_nrna
-        item.data = temp
-        data.push(item)
-      })
-      //返回数据条数小于请求数据条数表示没有更多
-      hasMore = result.VALUES.length < number ? false : true
-      this.setState({
-        listData: listData.cloneWithRows(data),
-        refreshing: false,
-        isLoading: false,
-        empty: data.length > 0 ? false : true
-      })
+          //重新组装的数据
+          data.push({ pk, checked: false, data: template })
+        })
+        //返回数据条数小于请求数据条数表示没有更多
+        hasMore = result.VALUES.length < number ? false : true
+        this.setState({
+          dataSource: dataSource.cloneWithRows(data),
+          refreshing: false,
+          isLoading: false,
+          empty: data.length > 0 ? false : true
+        })
+      }
     })
   }
 
   componentDidMount() {
     this.state.height = this.state.height - ReactDOM.findDOMNode(this.tabs).offsetTop - 40
-    let areacode_str = []
-    //获取列表节点
-    let funcode = this.props.location.state.funcode_list
-    //获取表
-    this.props.location.state.table.forEach(item => {
-      areacode_str.push({ code: item })
-    })
-    getTemplate([{ funcode, areacode_str }]).then(result => {
-      if (result.VALUES !== 0) {
-        template.card_head = result.VALUES[0]['card_head']
-        template.card_body = result.VALUES[1]['card_body']
-      }
-      this.getData(_page = 0)
-    })
+    this.initTemplate()
   }
 
   render() {
-    const { search, height, multiSelect, listData, empty } = this.state
+    const { search, height, multiSelect, dataSource, empty } = this.state
     const { flag, startTime, endTime } = this.props
     return (
       <div>
@@ -155,8 +159,9 @@ class WorkTagList extends Base {
               mode="date"
               onChange={date => {
                 store.dispatch(addTodo('SET_LIST_STARTTIME', date))
-                this.setState({ listData: listData.cloneWithRows([]) })
-                this.getData(_page = 0)
+                this.setState({ dataSource: dataSource.cloneWithRows([]) }, () => {
+                  this.getData(_page = 0)
+                })
               }}>
               <div>开始时间:{startTime.toLocaleDateString()}</div>
             </DatePicker>
@@ -166,8 +171,9 @@ class WorkTagList extends Base {
               mode="date"
               onChange={date => {
                 store.dispatch(addTodo('SET_LIST_ENDTIME', date))
-                this.setState({ listData: listData.cloneWithRows([]) })
-                this.getData(_page = 0)
+                this.setState({ dataSource: dataSource.cloneWithRows([]) }, () => {
+                  this.getData(_page = 0)
+                })
               }}>
               <div>结束时间:{endTime.toLocaleDateString()}</div>
             </DatePicker>
@@ -179,88 +185,29 @@ class WorkTagList extends Base {
           ref={el => this.tabs = el}
           onChange={(tab, index) => {
             store.dispatch(addTodo('SET_LIST_FLAG', index))
-            this.setState({ listData: listData.cloneWithRows([]) }, () => this.getData(_page = 0))
+            this.setState({ dataSource: dataSource.cloneWithRows([]) }, () => this.getData(_page = 0))
           }}>
-          <div>
-            <div
-              onClick={() => this.getData(_page = 0)}
-              style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
-              暂无数据
-            </div>
-            <ListView
-              pageSize={5}
-              dataSource={listData}
-              pullToRefresh={this.pullToRefresh()}
-              onEndReached={this.onEndReached}
-              renderFooter={(this.foot)}
-              renderRow={(rowData, sectionID, rowID) =>
-                <WorkTagListItem
-                  itemData={rowData}
-                  index={rowID}
-                  multiSelect={multiSelect}
-                  onItemClick={(index) => this.onItemClick(index)} />}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
-          </div>
-          <div>
-            <div
-              onClick={() => this.getData(_page = 0)}
-              style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
-              暂无数据
-            </div>
-            <ListView
-              pageSize={5}
-              dataSource={listData}
-              pullToRefresh={this.pullToRefresh()}
-              onEndReached={this.onEndReached}
-              renderFooter={this.foot}
-              renderRow={(rowData, sectionID, rowID) =>
-                <WorkTagListItem
-                  itemData={rowData}
-                  index={rowID}
-                  multiSelect={multiSelect}
-                  onItemClick={(index) => this.onItemClick(index)} />}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
-          </div>
-          <div>
-            <div
-              onClick={() => this.getData(_page = 0)}
-              style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
-              暂无数据
-            </div>
-            <ListView
-              pageSize={5}
-              dataSource={listData}
-              pullToRefresh={this.pullToRefresh()}
-              onEndReached={this.onEndReached}
-              renderFooter={this.foot}
-              renderRow={(rowData, sectionID, rowID) =>
-                <WorkTagListItem
-                  itemData={rowData}
-                  index={rowID}
-                  multiSelect={multiSelect}
-                  onItemClick={(index) => this.onItemClick(index)} />}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
-          </div>
-          <div>
-            <div
-              onClick={() => this.getData(_page = 0)}
-              style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
-              暂无数据
-            </div>
-            <ListView
-              pageSize={5}
-              dataSource={listData}
-              pullToRefresh={this.pullToRefresh()}
-              onEndReached={this.onEndReached}
-              renderFooter={this.foot}
-              renderRow={(rowData, sectionID, rowID) =>
-                <WorkTagListItem
-                  itemData={rowData}
-                  index={rowID}
-                  multiSelect={multiSelect}
-                  onItemClick={(index) => this.onItemClick(index)} />}
-              style={{ height, fontSize: 14, display: empty ? 'none' : 'flex' }} />
-          </div>
+          {
+            tabs.map((item, index) => {
+              return (
+                <div key={index} >
+                  <div
+                    onClick={() => this.getData(_page = 0)}
+                    style={{ height, alignItems: 'center', justifyContent: 'center', display: empty ? 'flex' : 'none' }}>
+                    暂无数据
+                  </div>
+                  <ListView
+                    pageSize={5}
+                    dataSource={dataSource}
+                    pullToRefresh={this.pullToRefresh()}
+                    onEndReached={this.onEndReached}
+                    renderFooter={(this.foot)}
+                    renderRow={this.rowItem}
+                    style={{ height, display: empty ? 'none' : 'flex' }} />
+                </div>
+              )
+            })
+          }
         </Tabs>
         <div style={{ display: multiSelect ? 'flex' : 'none', position: 'fixed', bottom: 0, width: '100%' }}>
           {this.initMenus()}
@@ -322,12 +269,13 @@ class WorkTagList extends Base {
    * @param {*} title 
    * @returns 
    */
-   onClickTabbarButton(title) {
+  onClickTabbarButton(title) {
     const { cuserid } = this.props
-    const { listData } = this.state
+    const { dataSource } = this.state
     let selectPK = [], action = ''
+    let billtype = this.props.location.state.billtype
 
-    listData._dataBlob.s1.forEach(v => {
+    dataSource._dataBlob.s1.forEach(v => {
       if (v.checked) {
         selectPK.push(v.pk)
       }
@@ -352,20 +300,20 @@ class WorkTagList extends Base {
         action = 'unapprove'
         break;
       case '取消':
-        let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
+        let newData = JSON.parse(JSON.stringify(dataSource._dataBlob.s1))
         newData.forEach(element => element.checked = false);
-        this.setState({ listData: listData.cloneWithRows(newData), multiSelect: false })
+        this.setState({ dataSource: dataSource.cloneWithRows(newData), multiSelect: false })
         return
       default:
         break;
     }
 
-    getZPXQData({ action, pk: selectPK[0], cuserid }).then(result => {
+    getZPXQData({ action, pk: selectPK[0], cuserid }, billtype).then(result => {
       Toast.success(result.data.message, 1)
       //filter方法筛选数组符合条件的留下
-      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1)).filter(item => !item.checked)
+      let newData = JSON.parse(JSON.stringify(dataSource._dataBlob.s1)).filter(item => !item.checked)
       this.setState({
-        listData: listData.cloneWithRows(newData),
+        dataSource: dataSource.cloneWithRows(newData),
         empty: newData.length > 0 ? false : true,
         multiSelect: false
       })
@@ -377,19 +325,15 @@ class WorkTagList extends Base {
    * @param {*} title 
    */
   onClickRightMenus(title) {
-    const { listData } = this.state
+    const { dataSource } = this.state
     switch (title) {
       case '新增':
         store.dispatch(addTodo('SET_DETAIL_DataSource', []))
         router2new(this, this.props.location.state)
         break;
       case '编辑':
-        if (listData._dataBlob.s1.length > 0) {
-          let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1))
-          this.setState({
-            multiSelect: !this.state.multiSelect,
-            listData: listData.cloneWithRows(newData)
-          })
+        if (dataSource._dataBlob.s1.length > 0) {
+          this.setState({ multiSelect: !this.state.multiSelect })
         }
         break;
       case '筛选':
@@ -409,7 +353,7 @@ class WorkTagList extends Base {
   pullToRefresh() {
     return (
       <PullToRefresh refreshing={this.state.refreshing} onRefresh={() => {
-        this.state.listData = this.state.listData.cloneWithRows([])
+        this.state.dataSource = this.state.dataSource.cloneWithRows([])
         this.getData(_page = 0)
       }} />
     )
@@ -428,6 +372,25 @@ class WorkTagList extends Base {
   }
 
   /**
+   * 主体
+   * @param {*} rowData 
+   * @param {*} sectionID 
+   * @param {*} rowID 
+   * @returns 
+   */
+  rowItem = (rowData, sectionID, rowID) => {
+    const { multiSelect } = this.state
+    let billtype = this.props.location.state.billtype
+    return (
+      <WorkTagListItem
+        itemData={rowData}
+        index={rowID}
+        billtype={billtype}
+        multiSelect={multiSelect}
+        onItemClick={(index) => this.onItemClick(index)} />)
+  }
+
+  /**
    * 页脚
    * @returns 
    */
@@ -442,16 +405,15 @@ class WorkTagList extends Base {
    * @param {*} index 下标
    */
   onItemClick(index) {
-    const { multiSelect, listData } = this.state
+    const { multiSelect, dataSource } = this.state
     if (multiSelect) {
       //多选
-      let newData = JSON.parse(JSON.stringify(listData._dataBlob.s1));
+      let newData = JSON.parse(JSON.stringify(dataSource._dataBlob.s1));
       newData[index].checked = !newData[index].checked;
-      this.setState({ listData: listData.cloneWithRows(newData) })
+      this.setState({ dataSource: dataSource.cloneWithRows(newData) })
     } else {
       //非多选跳转详情
       let tableInfo = this.props.location.state
-      tableInfo.edit = this.props.flag === 0 ? true : false
       store.dispatch(addTodo('SET_DETAIL_DataSource', []))
       store.dispatch(addTodo('SET_DETAIL_BaseDataSource', baseData[index]))
       router2detail(this, tableInfo)

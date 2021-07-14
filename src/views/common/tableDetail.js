@@ -8,7 +8,6 @@ import SelectView from "../../components/selectView";
 import store, { addTodo } from '../../store/store';
 
 import { Toast } from 'antd-mobile';
-import { getValue } from '../../utils/utils';
 
 //记录选择字段的下标
 let selectIndex = -1
@@ -18,6 +17,8 @@ class TableDetail extends Base {
         super(props)
         this.state = {
             table: props.location.state.table,
+            code: props.location.state.code,
+            index: props.location.state.index,
             showSelect: false,
             selectData: []
         }
@@ -56,9 +57,9 @@ class TableDetail extends Base {
     }
 
     onClickTabbarButton() {
-        const { table } = this.state
+        const { table, code, index } = this.state
         this.props.history.goBack()
-        store.dispatch(addTodo('SET_DETAIL_Table', table))
+        store.dispatch(addTodo('SET_DETAIL_Table', { table, code, index }))
     }
 
     //----------------------------------------Edit----------------------------------------//

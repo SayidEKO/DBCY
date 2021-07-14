@@ -24,7 +24,7 @@ export default class Alert extends Component {
   }
 
   onRadioClickCallBack(value) {
-    const { pk } = this.props
+    const { pk, billName } = this.props
     let pickData = []
     if (value === 'T' || value === 'A') {
       getType([{ refertype: 'psndoc' }]).then(result => {
@@ -35,8 +35,8 @@ export default class Alert extends Component {
       })
     } else if (value === 'R') {
       let cuserid = store.getState().userModule.cuserid
-      let params = { action: 'return_approve', cuserid, pk, billtype: "ZPXQ" }
-      getZPXQData(params).then(result => {
+      let params = { action: 'return_approve', cuserid, pk, billtype: billName }
+      getZPXQData(params, billName).then(result => {
         if (result.VALUES.length > 0) {
           result.VALUES.forEach(item => {
             let obj = {

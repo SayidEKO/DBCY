@@ -5,7 +5,7 @@ import { Component } from 'react'
 import { withRouter } from 'react-router-dom';
 
 import { router2tableDetail } from '../utils/routers';
-import { countStringWidth, getLabel, getValue } from '../utils/utils';
+import { countStringWidth, getLabel } from '../utils/utils';
 
 import { color_text_blue, font_table_title, font_text_title } from '../config';
 
@@ -17,24 +17,22 @@ let widths = []
 
     //添加
     add() {
-        const { onTableAddLisenter, templateSource, title } = this.props
+        const { templateSource, title, code } = this.props
         //防止模版被修改
         let table = JSON.parse(JSON.stringify(templateSource))
-        onTableAddLisenter(title)
-        router2tableDetail(this, { title, table })
+        router2tableDetail(this, { title, code, table })
     }
 
     //删除
     delete(index) {
-        const { onTableDeleteLisenter, title } = this.props
-        onTableDeleteLisenter(index, title)
+        const { onTableDeleteLisenter, code } = this.props
+        onTableDeleteLisenter(index, code)
     }
 
     //编辑
     edit(index) {
-        const { onTableEditLisenter, tableSource, title } = this.props
-        onTableEditLisenter(index, title)
-        router2tableDetail(this, { title, table: tableSource[index] })
+        const { tableSource, title, code } = this.props
+        router2tableDetail(this, { title, code, index, table: tableSource[index] })
     }
 
     render() {
