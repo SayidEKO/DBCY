@@ -1,15 +1,12 @@
 //弹出选择器
 import { Component } from 'react'
-import { Badge, Picker, Toast } from 'antd-mobile'
+import { Picker } from 'antd-mobile'
 
 import CustomTabs from './customTabs'
 
-import { getDeep } from '../utils/utils'
-
 import { color_button_blue } from '../config'
 
-//tab选过的下标
-let selecTabIndex = []
+
 
 export default class SelectPerson extends Component {
 
@@ -21,39 +18,16 @@ export default class SelectPerson extends Component {
   }
 
   state = {
-    dataSource: [],    //数据源
-    selectData: [],   //选中的数据下标
-    tabs: [],          //tab标签名
     tableIndex: 0,    //table下标
+    //下级部门数据
     departmentData: [],
-    tabData: []
-  }
-
-  static getDerivedStateFromProps(props, state) {
-    if (props.dataSource.length !== 0) {
-      //深度
-      let deep = getDeep(props.dataSource, 0)
-      //tabls长度和数据深度不一样表示是新的数据
-      if (state.tabs.length !== deep) {
-        let tabs = []
-        for (let i = 0; i < deep; i++) {
-          tabs.push({ title: <Badge>请选择</Badge> })
-        }
-        return { dataSource: props.dataSource, tabs }
-      }
-
-      // table选中第一个的时候重新赋值
-      if (state.tableIndex === 0) {
-        return { dataSource: props.dataSource }
-      }
-      return {}
-    }
-    return { dataSource: [], selectData: [], tableIndex: 0, tabs: [] }
+    //tab选过的下标
+    selectDepartment: []
   }
 
   render() {
-    const { show, onClickMaskCallBack, onSelectResultCallBack } = this.props
-    const { tabData, tableIndex, tabs, departmentData } = this.state
+    const { show, onClickMaskCallBack, dataSource } = this.props
+    const { selectDepartment, departmentData } = this.state
 
     return (
       <div style={{
@@ -91,77 +65,48 @@ export default class SelectPerson extends Component {
               data={departmentData}
               onOk={(e) => this.onClickPicker(e)}>
               <CustomTabs
-                tabs={tabs}
-                dataSource={tabData}
-                tableIndex={tableIndex}
-                selecTabIndex={selecTabIndex}
-                onClickTable={(index) => this.onClickTable(index)}
-                onChange={index => this.onChange(index)}
-                onItemClick={item => onSelectResultCallBack(item)} />
+                departmentData={dataSource}
+                selectDepartment={selectDepartment}
+                onClickTable={(data, index) => this.onClickTable(data, index)}
+                onItemClick={item => this.onItemClick(item)} />
             </Picker>
-
           </div>
         </div>
       </div>
     )
   }
 
+  /**
+   * CustomTabs人员选中回调
+   * @param {*} item 
+   */
+  onItemClick(item) {
+    const { onSelectResultCallBack } = this.props
+    //清空CustomTabs人员选中项
+    this.setState({ selectDepartment: [] })
+    onSelectResultCallBack(item)
+  }
 
+  /**
+   * CustomTabs选项卡点击
+   * @param {*} departmentData 下级部门
+   * @param {*} tableIndex 
+   */
+  onClickTable(departmentData, tableIndex) {
+    const { selectDepartment } = this.state
+    //清空之后的选项
+    selectDepartment.splice(tableIndex)
+    this.setState({ departmentData, tableIndex, selectDepartment })
+  }
 
   /**
    * pickerView点击事件(部门选中)
    */
   onClickPicker(e) {
-    const { dataSource, tabs, tableIndex } = this.state
-    let temp = dataSource
+    const { tableIndex, selectDepartment } = this.state
     //记录部门
-    selecTabIndex[tableIndex] = e[0]
-
-    selecTabIndex.forEach((item, index) => {
-      for (let i = 0; i < temp.length; i++) {
-        if (item === temp[i].value) {
-          tabs[index].title = <Badge>{temp[i].label}</Badge>
-          if (index === selecTabIndex.length - 1) {
-            this.setState({ tabData: temp[i].psndoc })
-          }
-          temp = temp[i].children
-          break
-        }
-      }
-    })
-
-    console.log(e);
-  }
-
-
-  /**
-   * tab的点击事件
-   * @param {*} index 
-   */
-  onClickTable(index) {
-    const { dataSource, tabs } = this.state
-    let temp = dataSource
-
-    //删除当前部门的下级
-    selecTabIndex.splice(index)
-    tabs.forEach((item, i) => {
-      if (i > index) {
-        item.title = <Badge>请选择</Badge>
-      }
-    })
-    if (index === 0) {
-      this.setState({ departmentData: dataSource, tableIndex: index, tabData: [] })
-    } else {
-      selecTabIndex.forEach((item, index) => {
-        for (let i = 0; i < temp.length; i++) {
-          if (item === temp[i].value) {
-            temp = temp[i].children
-            break
-          }
-        }
-      })
-      this.setState({ departmentData: temp, tableIndex: index, tabData: [], tabs })
-    }
+    selectDepartment[tableIndex] = e[0]
+    this.setState({ selectDepartment })
   }
 
   onSearch() {

@@ -54,7 +54,7 @@ class New extends Base {
           if (template.yqpx === '1') {
             //初始化一些数据
             template.yqdata.forEach(word => {
-              if (word.label === 'billmark') {
+              if (word.code === 'billmaker') {
                 //制单人
                 word.value = { value: cuserid, label: userName }
               } else if (word.code === 'billtype') {
@@ -228,7 +228,7 @@ class New extends Base {
       } else {
         selectIndex = index
         //选择人员单独处理
-        if (code === 'person') {
+        if (code === 'person' || code === 'modifier' || code === 'creator') {
           this.setState({ showPerson: true, personData: value })
         } else {
           this.setState({ showDepartment: true, departmentData: value })
