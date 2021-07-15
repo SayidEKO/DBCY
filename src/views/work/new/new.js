@@ -7,13 +7,11 @@ import { Toast } from 'antd-mobile'
 import Table from '../../../components/table'
 import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
+import SelectPerson from "../../../components/selectPerson";
 import SelectDepartment from "../../../components/selectDepartment";
 
-
 import store, { addTodo } from '../../../store/store';
-
 import { getTemplate, getZPXQData } from '../../../request/api'
-
 import { isEmpty, checkData, getFormatDate } from '../../../utils/utils';
 
 //存表体模板
@@ -28,16 +26,20 @@ class New extends Base {
       //高度
       height: document.documentElement.clientHeight,
       dataSource: [],
-      showSelect: false,
-      selectData: []
+      //人员相关
+      personData: [],
+      departmentData: [],
+      //部门相关
+      showPerson: false,
+      showDepartment: false,
     }
   }
 
   //获取详情模版
   getTemplate() {
     const { userName, cuserid } = this.props
-    let billtype = this.props.location.state.billtype
     let bill = this.props.location.state.bill
+    let billtype = this.props.location.state.billtype
     let funcode = this.props.location.state.funcode_detail.save
 
     getTemplate([{ funcode }], billtype).then(result => {
@@ -52,27 +54,23 @@ class New extends Base {
           if (template.yqpx === '1') {
             //初始化一些数据
             template.yqdata.forEach(word => {
-              if (word.label === '制单人') {
-                word.value = {
-                  value: cuserid,
-                  label: userName
-                }
+              if (word.label === 'billmark') {
+                //制单人
+                word.value = { value: cuserid, label: userName }
               } else if (word.code === 'billtype') {
-                word.value = {
-                  value: bill.code,
-                  label: bill.name
-                }
+                //单据类型
+                word.value = { value: bill.code, label: bill.name }
               }
               //用于检查数据
               word.hasError = false
             })
           } else {
-            //新增是没有表体数据，只加模版
             template.yqdata.forEach(word => {
               //用于检查数据
               word.hasError = false
             })
             templateData[template.code] = JSON.parse(JSON.stringify(template))
+            //新增是没有表体数据，只加模版
             template.yqdata = []
           }
         })
@@ -115,14 +113,19 @@ class New extends Base {
   }
 
   render() {
-    const { height, dataSource, showSelect, selectData } = this.state
+    const { height, dataSource, showDepartment, departmentData, showPerson, personData } = this.state
     return (
       <div style={{ background: 'white' }}>
         <SelectDepartment
-          show={showSelect}
-          dataSource={selectData}
+          show={showDepartment}
+          dataSource={departmentData}
           onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
-          onClickMaskCallBack={() => this.setState({ showSelect: false })} />
+          onClickMaskCallBack={() => this.setState({ showDepartment: false })} />
+        <SelectPerson
+          show={showPerson}
+          dataSource={personData}
+          onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
+          onClickMaskCallBack={() => this.setState({ showPerson: false })} />
         <div style={{ overflow: 'scroll', height }}>
           {
             dataSource.map((table, tableIndex) => {
@@ -184,7 +187,7 @@ class New extends Base {
         head.approvestatus = -1
         let billtype = this.props.location.state.billtype
         let data = { action: 'add', cuserid, head, bodys }
-        
+
         getZPXQData(data, billtype).then(result => {
           console.log(result);
           Toast.success(result.MESSAGE, 1, () => {
@@ -217,14 +220,19 @@ class New extends Base {
   }
 
   //----------------------------------------Edit----------------------------------------
-  onEditCallBack = (index, value) => {
+  onEditCallBack = (index, value, code) => {
     if (Array.isArray(value)) {
       if (isEmpty(value)) {
         selectIndex = -1
         Toast.info('暂无数据！', 1)
       } else {
         selectIndex = index
-        this.setState({ showSelect: true, selectData: value })
+        //选择人员单独处理
+        if (code === 'person') {
+          this.setState({ showPerson: true, personData: value })
+        } else {
+          this.setState({ showDepartment: true, departmentData: value })
+        }
       }
     } else {
       const { dataSource } = this.state
@@ -245,21 +253,21 @@ class New extends Base {
         table.yqdata[selectIndex].value = item
       }
     })
-    this.setState({ dataSource, showSelect: false })
+    this.setState({ dataSource, showDepartment: false, showPerson: false })
   }
 }
 
 //映射函数(绑定属性在porps)
 const mapStateToProps = state => {
   return {
-    userName: state.userModule.user_name,
-    cuserid: state.userModule.cuserid,
-
-    pk_group: state.userModule.pk_group,
     pk_org: state.userModule.pk_org,
+    cuserid: state.userModule.cuserid,
+    userName: state.userModule.user_name,
+
     flag: state.listModule.flag,
-    propDataSource: state.detailModule.dataSource,
     table: state.detailModule.table,
+    pk_group: state.userModule.pk_group,
+    propDataSource: state.detailModule.dataSource,
   }
 }
 

@@ -49,41 +49,41 @@ export default class Select extends Component {
                     key={index}
                     style={{ fontSize: font_text_title, display: 'flex' }}
                     onClick={e => this.onClick(item)}>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >序号</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>序号</div>
                       <div >{index + 1}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >发送人</div>
-                      <div >{item.sendman}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>发送人</div>
+                      <div style={{ padding: 10 }}>{item.sendman}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >发送日期</div>
-                      <div >{item.senddate}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>发送日期</div>
+                      <div style={{ padding: 10 }}>{item.senddate}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >审批人</div>
-                      <div >{item.dealman}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>审批人</div>
+                      <div style={{ padding: 10 }}>{item.dealman}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >审批日期</div>
-                      <div >{item.dealdate}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>审批日期</div>
+                      <div style={{ padding: 10 }}>{item.dealdate}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >环节</div>
-                      <div >{item.approvelink}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>环节</div>
+                      <div style={{ padding: 10 }}>{item.approvelink}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >审批状况</div>
-                      <div >{item.approvestatus}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>审批状况</div>
+                      <div style={{ padding: 10 }}>{item.approvestatus}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >审批意见</div>
-                      <div >{item.checknote}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>审批意见</div>
+                      <div style={{ padding: 10 }}>{item.checknote}</div>
                     </div>
-                    <div style={{ padding: 10, textAlign: 'center' }}>
-                      <div >批语</div>
-                      <div >{item.checknote}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ background: 'lightGray', padding: 10 }}>批语</div>
+                      <div style={{ padding: 10 }}>{item.checknote}</div>
                     </div>
                   </div>
                 )

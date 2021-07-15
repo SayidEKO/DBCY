@@ -1,6 +1,6 @@
 //弹出选择器
 import { Component } from 'react'
-import { Tabs } from 'antd-mobile'
+import { Tabs, Toast } from 'antd-mobile'
 
 import { font_text_title } from '../config'
 
@@ -19,7 +19,7 @@ export default class CustomTabs extends Component {
   }
 
   render() {
-    const { tabs, tableIndex, dataSource, onClickTable, onItemClick } = this.props
+    const { tabs, tableIndex, selecTabIndex, dataSource, onClickTable, onItemClick } = this.props
     const { height } = this.state
     return (
       <Tabs
@@ -27,8 +27,13 @@ export default class CustomTabs extends Component {
         page={Number(tableIndex)}
         swipeable={false}
         onTabClick={(tab, index) => {
-          onClickTable(index)
-          this.props.onClick()
+          //如果上一级没有数据
+          if (selecTabIndex[index - 1] === undefined && index !== 0) {
+            Toast.fail('请先选择上级部门', 1, null, false)
+          }else {
+            onClickTable(index)
+            this.props.onClick()
+          }
         }}
         tabBarTextStyle={{ fontSize: font_text_title }}>
         <div style={{ display: 'flex', alignItems: 'center', height }}>

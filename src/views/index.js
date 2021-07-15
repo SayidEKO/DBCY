@@ -7,17 +7,41 @@ import { withRouter } from 'react-router-dom'
 
 import { getWorkerBook } from '../request/api';
 
-import { router2workerbook, router2work } from "../utils/routers";
+import { isEmpty } from "../utils/utils";
 
-import { DEBUG } from '../config';
+import { router2workerbook, router2work, router2new } from "../utils/routers";
+
+import { DEBUG, menus } from '../config';
 
 
 class Index extends Component {
 
   componentDidMount() {
+    let search = this.props.location.search
+    search = search.split('&')
+
+    let code = search[0]
+    let param = search[1]
+    //获取code
+    if (!isEmpty(code)) {
+      code = code.slice(6, code.length)
+    }
+    //获取参数
+    if (!isEmpty(param)) {
+      param = param.slice(6, param.length)
+    }
+    
+
     const { user_code } = this.props
     if (DEBUG) {
       router2work(this)
+      // let bodys = menus['人员管理'].child
+      // bodys.forEach(body => {
+      //   if (body.title === '招聘需求申请') {
+      //     router2new(this, body)
+      //   }
+      // })
+      
     } else {
       localStorage.setItem('sign', false)
       //获取员工手册(这里需要调2次，第一创建，第二次签订)

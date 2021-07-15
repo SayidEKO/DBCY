@@ -271,4 +271,4 @@ export const font_text_title = 10
 export const font_table_title = 16
 
 //环境切换
-export const DEBUG = false
+export const DEBUG = true

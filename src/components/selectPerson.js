@@ -25,7 +25,7 @@ export default class SelectPerson extends Component {
     selectData: [],   //选中的数据下标
     tabs: [],          //tab标签名
     tableIndex: 0,    //table下标
-    pickData: [],
+    departmentData: [],
     tabData: []
   }
 
@@ -53,7 +53,7 @@ export default class SelectPerson extends Component {
 
   render() {
     const { show, onClickMaskCallBack, onSelectResultCallBack } = this.props
-    const { tabData, tableIndex, tabs, pickData } = this.state
+    const { tabData, tableIndex, tabs, departmentData } = this.state
 
     return (
       <div style={{
@@ -88,13 +88,14 @@ export default class SelectPerson extends Component {
             </div>
             <Picker
               cols={1}
-              data={pickData}
+              data={departmentData}
               onOk={(e) => this.onClickPicker(e)}>
               <CustomTabs
                 tabs={tabs}
                 dataSource={tabData}
                 tableIndex={tableIndex}
-                onClickTable={(index, data) => this.onClickTable(index, data)}
+                selecTabIndex={selecTabIndex}
+                onClickTable={(index) => this.onClickTable(index)}
                 onChange={index => this.onChange(index)}
                 onItemClick={item => onSelectResultCallBack(item)} />
             </Picker>
@@ -136,12 +137,12 @@ export default class SelectPerson extends Component {
   /**
    * tab的点击事件
    * @param {*} index 
-   * @param {*} data 
    */
   onClickTable(index) {
     const { dataSource, tabs } = this.state
     let temp = dataSource
 
+    //删除当前部门的下级
     selecTabIndex.splice(index)
     tabs.forEach((item, i) => {
       if (i > index) {
@@ -149,13 +150,8 @@ export default class SelectPerson extends Component {
       }
     })
     if (index === 0) {
-      this.setState({ pickData: dataSource, tableIndex: index, tabData: [] })
+      this.setState({ departmentData: dataSource, tableIndex: index, tabData: [] })
     } else {
-      if (selecTabIndex[index - 1] === undefined) {
-        Toast.fail('请先选择上级部门', 1, null, false)
-        return
-      }
-
       selecTabIndex.forEach((item, index) => {
         for (let i = 0; i < temp.length; i++) {
           if (item === temp[i].value) {
@@ -164,9 +160,7 @@ export default class SelectPerson extends Component {
           }
         }
       })
-      
-
-      this.setState({ pickData: temp, tableIndex: index, tabData: [], tabs })
+      this.setState({ departmentData: temp, tableIndex: index, tabData: [], tabs })
     }
   }
 
