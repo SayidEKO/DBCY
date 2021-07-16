@@ -4,6 +4,7 @@ import { withRouter } from "react-router-dom";
 import { List } from "antd-mobile";
 
 import { getWorkerBook, uploadFile } from "../../request/api";
+import Wave from "../../components/wave";
 
 const Item = List.Item;
 
@@ -121,14 +122,17 @@ class My extends Base {
                   )
                 } else {
                   return (
-                    <Item
-                      key={obj.title}
-                      thumb={<i className="iconfont icon-dingdan"></i>}
-                      arrow="horizontal"
-                      // extra={<Badge text={2} overflowCount={10}  />}
-                      onClick={() => this.onItemClick(obj, user_code)}>
-                      {obj.title}
-                    </Item>
+                    <Wave key={obj.title}>
+                      <Item
+                        
+                        thumb={<i className="iconfont icon-dingdan"></i>}
+                        arrow="horizontal"
+                        // extra={<Badge text={2} overflowCount={10}  />}
+                        onClick={() => this.onItemClick(obj, user_code)}
+                        style={{userSelect: 'none'}}>
+                        {obj.title}
+                      </Item>
+                    </Wave>
                   )
                 }
 

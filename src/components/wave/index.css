@@ -1,0 +1,42 @@
+.wave {
+    position: relative;
+}
+
+.wave > .wave-over {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+
+.wave > .wave-over > .wave-item {
+    pointer-events: none;
+    position: absolute;
+    /* background-blend-mode: lighten; */
+    mix-blend-mode: difference;
+    box-sizing: content-box;
+    width: 1px;
+    height: 1px;
+    border-radius: 100%;
+    border-style: solid;
+    border-width: 0;
+    opacity: 0;
+}
+
+.wave > .wave-over > .wave-item-active {
+    transition: all 200ms;
+    border-width: 30px;
+    transform: translate(-30px, -30px);
+    opacity: 0.5;
+}
+
+.wave > .wave-over > .wave-item-off {
+    transition: all 200ms;
+    border-width: 300px;
+    transform: translate(-300px, -300px);
+    opacity: 0;
+}
