@@ -2,9 +2,9 @@ import Base from "../base";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { List } from "antd-mobile";
+import Ripples from 'react-ripples';
 
 import { getWorkerBook, uploadFile } from "../../request/api";
-import Wave from "../../components/wave";
 
 const Item = List.Item;
 
@@ -122,7 +122,7 @@ class My extends Base {
                   )
                 } else {
                   return (
-                    <Wave key={obj.title}>
+                    <Ripples key={obj.title} className="d-block">
                       <Item
                         
                         thumb={<i className="iconfont icon-dingdan"></i>}
@@ -132,7 +132,7 @@ class My extends Base {
                         style={{userSelect: 'none'}}>
                         {obj.title}
                       </Item>
-                    </Wave>
+                    </Ripples>
                   )
                 }
 
