@@ -27,6 +27,18 @@ const getToken = () => {
   return http('post', '/service/ncBaseDataSynServlet', params)
 }
 
+export function getUserInfo(code) {
+
+  let params = {}
+  params.SID = Math.floor(Math.random() * (100));
+  params.KEY = 'wdhl'
+  params.TYPE = 2
+  params.SRCSYS = '企业微信'
+  params.VERIFY = 'token'
+  params.DATA = [{ user_code: '', code }]
+  return http('post', '/service/ncBaseDataSynServlet', params)
+}
+
 /**
  * 上传文件
  * @param {文件} file 
@@ -76,6 +88,8 @@ const ncBaseDataSynServlet = async (type, data, billtype) => {
   console.log(params);
   return await http('post', '/service/ncBaseDataSynServlet', params);
 }
+
+
 
 /**
  * 获取模版

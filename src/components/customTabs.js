@@ -1,4 +1,4 @@
-//弹出选择器
+
 import { Component } from 'react'
 import { Badge, Tabs, Toast } from 'antd-mobile'
 
