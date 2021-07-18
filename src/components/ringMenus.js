@@ -1,6 +1,6 @@
 //环形菜单
 import { Component } from 'react';
-import '../style/ringMenus.css'
+import '../style/ringMenus.scss'
 
 export default class RingMenus extends Component {
   state = {

@@ -24,7 +24,7 @@ import ErrorPage from './views/common/errorPage'
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import React from 'react';
 
-import './style/transition.css';
+import './style/transition.scss';
 
 const ANIMATION_MAP = {
   PUSH: 'forward',
