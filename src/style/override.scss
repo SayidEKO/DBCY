@@ -1,0 +1,18 @@
+// 此文件用于重写第三方组件的默认样式
+
+@import '_variable.scss';
+
+body {
+    background-color: $page-bg;
+}
+
+.am-list-thumb>img,
+img.am-grid-icon {
+    filter: url("./filters.svg") + "#primarycolor";
+}
+
+// 列表头图标
+.am-list-thumb .iconfont {
+    color: $theme-color;
+    font-size: 22px;
+}

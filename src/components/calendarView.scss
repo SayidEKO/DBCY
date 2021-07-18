@@ -1,0 +1,70 @@
+@import "../style/variable";
+
+.calendar-view {
+    background-color: #fff;
+}
+
+.calendar-view .calendar-view-header {
+    display: flex;
+    height: 35px;
+    padding-left: 8px;
+    padding-right: 8px;
+    
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+
+    svg {
+        margin-left: 16px;
+    }
+}
+
+.calendar-view .week-panel {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0 2px;
+    border-bottom: 1px solid #ddd;
+}
+
+.calendar-view .week-panel .cell {
+    flex: 1;
+    text-align: center;
+}
+
+.calendar-view .cell-grey,
+.calendar-view .months-week .cell:not(.current-month) {
+    color:  #bbb
+}
+
+.calendar-view .months-week {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0 2px;
+}
+
+.calendar-view .months-week .cell {
+    flex: 1;
+    text-align: center;
+}
+
+.calendar-view .date-wrapper {
+    margin: 0 auto;
+    height: 35px;
+    line-height: 35px;
+    width: 35px;
+    display: flex;
+    font-size: 17px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+}
+
+.calendar-view .today-date .date-wrapper {
+    background-color: transparentize($color:$theme-color, $amount: 0.3);
+}
+
+.calendar-view .selected-date .date-wrapper {
+    background-color: $theme-color;
+    color: #fff;
+}

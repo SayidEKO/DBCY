@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <!-- 使用主色进行单色化，用于直接修改图片图标颜色 -->
+    <filter id="primarycolor" x="0" y="0" width="100%" height="100%">
+        <feColorMatrix in="SourceGraphic" 
+        type="matrix"
+        values="0 0 0 0 0.1843137254901961 
+                0 0 0 0 0.803921568627451
+                0 0 0 0 0.4901960784313725
+                0 0 0 1 0" />
+    </filter>
+</svg>
