@@ -3,13 +3,15 @@
  * @param {*} object 
  * @returns 
  */
-export function isEmpty(object) {
+ export function isEmpty(object) {
   if (object === null || object === undefined) {
     return true
   } else {
     if (Array.isArray(object)) {
       return object.length === 0
-    } else {
+    } else if (JSON.stringify(object) === '{}') {
+      return true
+    }else{
       return object === ''
     }
   }
@@ -122,139 +124,18 @@ export function getDeep(arr, depth) {
   }
 }
 
-/**
- * 检查数据
- * @param {*} dataSource 
- * @param {*} head 
- * @param {*} bodys 
- * @returns 
- */
-export function checkData(dataSource, head, bodys) {
-  //检查数据
-  let hasError = false
-  dataSource.forEach(data => {
-    for (let key in data) {
-      if (key === 'card_head') {
-        let error = 0
-        data[key].forEach(item => {
-          let value = getValue(item)
-          //没有值则不传该字段，
-          if (isEmpty(value)) {
-            if (item.required === 'Y') {
-              item.hasError = true
-              error++
-            }
-          } else {
-            //新增不传billno
-            if (item.code !== 'billno') {
-              head[item.code] = value
-            }
-          }
-        })
-        if (error > 0) {
-          hasError = true
-        }
-      } else {
-        let error = 0
-        //存单张表
-        let objs = []
-        //遍历子表每一条数据
-        data[key].forEach(items => {
-          //存单条数据
-          let obj = {}
-          //遍历表每一个字段
-          items.forEach(item => {
-            let value = getValue(item)
-            //没有值则不传该字段，
-            if (isEmpty(value)) {
-              if (item.required === 'Y') {
-                item.hasError = true
-                error++
-              }
-            } else {
-              //新增不传billno
-              if (item.code !== 'billno') {
-                obj[item.code] = value
-              }
-            }
-          })
-          objs.push(obj)
-        })
-        bodys[key] = objs
-        if (error !== 0) {
-          hasError = true
-        }
-      }
-    }
-  })
-  return hasError
-}
-
-/**
- * 获取人（需要添加部门）
- * @param {*} data 
- * @param {*} checkUserData 
- */
-export function getUserData(data, checkUserData) {
-  let obj = {}
-  data.forEach(item => {
-    if (item.psndoc === undefined) {
-      getUserData(item.children, checkUserData)
-    } else {
-      item.psndoc.forEach(v => {
-        obj = {
-          value: v.cuserid,
-          label: v.name
-        }
-        checkUserData.push(obj)
-      })
-    }
-  })
-}
-
-//  export function getDepartment(arr) {
-//   const objs = [];
-//   let obj = {};
-//   arr.forEach(router => {
-//     if (router.children) {
-//       router.children = getDepartment(router.children);
-//       const { id, name, children, psndoc } = router;
-//       obj = {
-//         value: id,
-//         label: name,
-//         psndoc: psndoc,
-//         children: children
-//       }
-//     }
-//     objs.push(obj);
-//   })
-//   return objs;
-// }
 
 /**
  * 获取部门
  * @param {*} arr 
  * @returns 
  */
-export function getDepartment(arr) {
+ export function getDepartment(arr) {
   const objs = [];
   let obj = {};
   arr.forEach(router => {
     if (router.children) {
-      if (router.psndoc && router.psndoc.length > 0) {
-        let objs = []
-        router.psndoc.forEach(item => {
-          let obj = {
-            value: item.cuserid,
-            label: item.name
-          }
-          objs.push(obj)
-        })
-        router.children = objs
-      } else {
-        router.children = getDepartment(router.children);
-      }
-
+      router.children = getDepartment(router.children);
       const { id, name, children, psndoc } = router;
       obj = {
         value: id,
@@ -266,4 +147,65 @@ export function getDepartment(arr) {
     objs.push(obj);
   })
   return objs;
+}
+
+/**
+ * 检查数据
+ * @param {*} dataSource 
+ * @param {*} head 
+ * @param {*} bodys 
+ * @returns true没有错误
+ */
+export function checkData(dataSource, head, bodys) {
+  //检查数据
+  let isOk = true
+
+  dataSource.forEach(table => {
+    if (table.yqpx === '1') {
+      table.yqdata.forEach(item => {
+        let value = getValue(item)
+        //没有值则不传该字段，
+        if (isEmpty(value)) {
+          if (item.required === 'Y') {
+            item.hasError = true
+            isOk = false
+          }
+        } else {
+          //新增不传billno
+          if (item.code !== 'billno') {
+            head[item.code] = value
+          }
+        }
+      })
+    } else {
+      //存单张表
+      let objs = []
+      //遍历子表每一条数据
+      table.yqdata.forEach(items => {
+        //存单条数据
+        let obj = {}
+        //遍历表每一个字段
+        items.forEach(item => {
+          let value = getValue(item)
+          //没有值则不传该字段，
+          if (isEmpty(value)) {
+            if (item.required === 'Y') {
+              item.hasError = true
+              isOk = false
+            }
+          } else {
+            //新增不传billno
+            if (item.code !== 'billno') {
+              obj[item.code] = value
+            }
+          }
+        })
+        objs.push(obj)
+      })
+      if (objs.length > 0) {
+        bodys[table.code] = objs
+      }
+    }
+  })
+  return isOk
 }

@@ -27,6 +27,18 @@ const getToken = () => {
   return http('post', '/service/ncBaseDataSynServlet', params)
 }
 
+export function getUserInfo(code) {
+
+  let params = {}
+  params.SID = Math.floor(Math.random() * (100));
+  params.KEY = 'wdhl'
+  params.TYPE = 2
+  params.SRCSYS = '企业微信'
+  params.VERIFY = 'token'
+  params.DATA = [{ user_code: '', code }]
+  return http('post', '/service/ncBaseDataSynServlet', params)
+}
+
 /**
  * 上传文件
  * @param {文件} file 
@@ -38,7 +50,9 @@ export const uploadFile = async (file, pk = '1001ZZ10000000009EQY') => {
   formData.append('TYPE', 11)
   formData.append('KEY', 'wdhl')
   formData.append('SID', Math.floor(Math.random() * (100)))
-  formData.append('billtype', 'ZPXQ')
+  //修改
+  let billName = 'ZPXQ'
+  formData.append('billtype', billName)
   formData.append('SRCSYS', '企业微信')
   formData.append('pk', pk)
   formData.append('file', file)
@@ -75,13 +89,15 @@ const ncBaseDataSynServlet = async (type, data, billtype) => {
   return await http('post', '/service/ncBaseDataSynServlet', params);
 }
 
+
+
 /**
  * 获取模版
  * @param {*} param 
  * @returns 
  */
-export async function getTemplate(param) {
-  return await ncBaseDataSynServlet(1, param, 'ZPXQ')
+export async function getTemplate(param, billtype) {
+  return await ncBaseDataSynServlet(1, param, billtype)
 }
 
 /**
@@ -89,8 +105,8 @@ export async function getTemplate(param) {
  * @param {*} param 
  * @returns 
  */
-export async function getZPXQData(param) {
-  return await ncBaseDataSynServlet(3, param, 'ZPXQ')
+export async function getZPXQData(param, billtype) {
+  return await ncBaseDataSynServlet(3, param, billtype)
 }
 
 /**

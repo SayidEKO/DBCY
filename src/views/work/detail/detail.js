@@ -6,7 +6,7 @@ import { Toast } from 'antd-mobile'
 
 import Table from '../../../components/table'
 import Alert from '../../../components/alert'
-import SelectView from "../../../components/selectView";
+import SelectDepartment from "../../../components/selectDepartment";
 import EditView from '../../../components/editView'
 import TabbarButton from '../../../components/tabbarButton'
 
@@ -17,17 +17,13 @@ import { getTemplate, getZPXQData } from '../../../request/api'
 import { getValue, isEmpty } from '../../../utils/utils';
 
 //存表体模板
-let templatesource = []
-//用于记录表名
-let tableName = ''
-//记录表的下标
-let tableIndex = -1
+let templateData = []
 //需要删除的远程数据
 let deletes = {}
 //记录选择字段的下标
 let selectIndex = -1
-//记录选择字段的code
-let selectCode = ''
+
+let pk
 
 class Detail extends Base {
 
@@ -49,62 +45,46 @@ class Detail extends Base {
    * 获取详情模版
    */
   initTemplate() {
-    const { listItem } = this.props
-    let areacode_str = []
-    let funcode = this.props.location.state.funcode_detail.save
-    //获取表
-    this.props.location.state.table.forEach(item => {
-      areacode_str.push({ code: item })
-    })
-    let data = [{ funcode, areacode_str }]
-    getTemplate(data).then(result => {
-      let dataSource = []
-      if (result.VALUES.length !== 0) {
-        result.VALUES.forEach(template => {
-          // 遍历模板
-          for (let templateKey in template) {
-            template[templateKey].sort((a, b) => { return a.position - b.position })
-            //判断是否为表头
-            if (templateKey === 'card_head') {
-              let tempItem = listItem
-              //遍历表头字段
-              template[templateKey].forEach(templateItem => {
-                //遍历数据的key
-                for (let key in tempItem[templateKey]) {
-                  //找到就跳出继续下一个
-                  if (templateItem.code === key) {
-                    templateItem.value = tempItem[templateKey][key]
-                    continue
-                  }
-                }
-              })
-              dataSource.push(template)
-            }
-            //处理模板表体
-            else {
-              if (!isEmpty(listItem[templateKey])) {
-                //遍历数据
-                let body = []
-                listItem[templateKey].forEach(item => {
-                  //多条数据所以复制出多个模板
-                  let newTemplate = JSON.parse(JSON.stringify(template[templateKey]))
-                  //遍历模板表体
-                  newTemplate.forEach(templateItem => {
-                    for (let key in item) {
-                      //找到就跳出继续下一个
-                      if (templateItem.code === key) {
-                        templateItem.value = item[key]
-                        continue
-                      }
-                    }
-                  })
+    const { listItem, flag } = this.props
+    let billtype = this.props.location.state.billtype
+    let save = this.props.location.state.funcode_detail.save
+    let audit = this.props.location.state.funcode_detail.audit
+    let pkName = this.props.location.state.pk_name
+    //flag（2： 审批）
+    let funcode = flag === 2 ? audit : save
 
-                  body.push(newTemplate)
-                })
-                templatesource.push(template)
-                dataSource.push({ [templateKey]: body })
-              }
-            }
+    getTemplate([{ funcode }], billtype).then(result => {
+      let dataSource = []
+      templateData = result.VALUES
+      if (!isEmpty(templateData)) {
+        //表排序
+        templateData.sort((a, b) => { return a.yqpx - b.yqpx })
+        dataSource = JSON.parse(JSON.stringify(templateData))
+        dataSource.forEach((table, tableIndex) => {
+          //字段排序
+          templateData[tableIndex].yqdata.sort((a, b) => { return a.position - b.position })
+          table.yqdata.sort((a, b) => { return a.position - b.position })
+          if (table.yqpx === '1') {
+            table.yqdata.forEach(word => {
+              word.value = listItem[table.code][word.code]
+              word.hasError = false
+            })
+            pk = listItem[table.code][pkName]
+          } else {
+            let bodys = listItem[table.code]
+            let objs = []
+            //遍历子表的每一条数据
+            bodys.forEach(body => {
+              //复制表体模板
+              let templateBody = JSON.parse(JSON.stringify(table.yqdata))
+              //遍历模版的每个字段
+              templateBody.forEach(word => {
+                word.value = body[word.code]
+                word.hasError = false
+              })
+              objs.push(templateBody)
+            })
+            table.yqdata = objs
           }
         })
       }
@@ -115,35 +95,34 @@ class Detail extends Base {
 
   static getDerivedStateFromProps(props, state) {
     const { listItem, propDataSource } = props
-    let table = props.table
-    if (!isEmpty(table)) {
+    let temp = props.table
+    if (!isEmpty(temp)) {
       //新增
-      if (tableIndex === -1) {
+      if (temp.index === undefined) {
         let obj = {}
-        table.forEach(item => {
+        temp.table.forEach(item => {
           if (item.code !== undefined) {
             let value = getValue(item)
             obj[item.code] = value
           }
         })
         obj.dr = 0
-        listItem[tableName].push(obj)
-
+        listItem[temp.code].push(obj)
         propDataSource.forEach(item => {
-          if (item[tableName] !== undefined) {
-            item[tableName].push(table)
+          if (item.code === temp.code) {
+            item.yqdata.push(temp.table)
           }
         })
       }
       // 编辑
       else {
-        table.forEach(item => {
-          listItem[tableName][tableIndex][item.code] = item.value
+        temp.table.forEach(item => {
+          listItem[temp.code][temp.index][item.code] = item.value
         })
 
         propDataSource.forEach(item => {
-          if (item[tableName] !== undefined) {
-            item[tableName][tableIndex] = table
+          if (temp.code === item.code) {
+            item.yqdata[temp.index] = temp.table
           }
         })
       }
@@ -170,52 +149,47 @@ class Detail extends Base {
   }
 
   render() {
-    const { listItem } = this.props
     const { height, dataSource, showAlert, showSelect, selectData } = this.state
-    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
+    let billtype = this.props.location.state.billtype
     return (
       <div style={{ position: 'relative' }}>
         <Alert
           showAlert={showAlert}
           pk={pk}
+          billtype={billtype}
           onAlertClickSubmit={this.onAlertClickSubmit}
           onAlertClickCancel={() => this.setState({ showAlert: false })} />
-        <SelectView
+        <SelectDepartment
           show={showSelect}
           dataSource={selectData}
           onSelectResultCallBack={item => this.onSelectResultCallBack(item)}
           onClickMaskCallBack={() => this.setState({ showSelect: false })} />
         <div style={{ background: 'white', paddingTop: 10, overflow: 'scroll', height }}>
           {
-            dataSource.map((items, bodyIndex) => {
-              for (let key in items) {
-                if (key === 'card_head') {
-                  return (
-                    items[key].map((item, index) => {
-                      return (
-                        <EditView
-                          key={item.code}
-                          index={index}
-                          item={item}
-                          onEditCallBack={this.onEditCallBack} />
-                      )
-                    })
-                  )
-                }
-                else {
-                  return (
-                    <Table
-                      key={key}
-                      title={key}
-                      templateSource={templatesource[bodyIndex - 1][key]}
-                      tableSource={items[key]}
-                      onTableAddLisenter={this.onTableAddLisenter}
-                      onTableEditLisenter={this.onTableEditLisenter}
-                      onTableDeleteLisenter={this.onTableDeleteLisenter} />
-                  )
-                }
+            dataSource.map((table, tableIndex) => {
+              if (table.yqpx === '1') {
+                return (
+                  table.yqdata.map((item, index) => {
+                    return (
+                      <EditView
+                        key={item.code}
+                        index={index}
+                        item={item}
+                        onEditCallBack={this.onEditCallBack} />
+                    )
+                  })
+                )
+              } else {
+                return (
+                  <Table
+                    key={tableIndex}
+                    title={table.yqname}
+                    code={table.code}
+                    templateSource={templateData[tableIndex].yqdata}
+                    tableSource={table.yqdata}
+                    onTableDeleteLisenter={this.onTableDeleteLisenter} />
+                )
               }
-              return null
             })
           }
         </div>
@@ -271,24 +245,22 @@ class Detail extends Base {
    * @param {*} title 
    */
   onClickTabbarButton(title) {
-    const { cuserid, listItem } = this.props
+    const { cuserid } = this.props
     let data = {}
-    let pk = isEmpty(listItem) ? '' : listItem.card_head.pk_nrna
-
+    let billtype = this.props.location.state.billtype
     switch (title) {
       case '撤回':
         data = { action: 'unapprove', pk, cuserid }
-        getZPXQData(data).then(result => {
+        getZPXQData(data, billtype).then(result => {
           Toast.success(result.MESSAGE, 1, () => {
             this.props.history.goBack()
           })
         })
         break;
       case '提交':
-        
         this.save().then(result => {
           data = { action: 'sendapprove', pk, cuserid }
-          getZPXQData(data).then(result => {
+          getZPXQData(data, billtype).then(result => {
             Toast.success(result.MESSAGE, 1, () => {
               this.props.history.goBack()
             })
@@ -308,85 +280,72 @@ class Detail extends Base {
    */
   async save() {
     const { cuserid, listItem } = this.props
+    const { dataSource } = this.state
 
-    let temp = JSON.parse(JSON.stringify(listItem))
-    let card_head = JSON.parse(JSON.stringify(temp.card_head))
-    delete (temp.card_head)
-    for (let key in card_head) {
-      if (typeof card_head[key] === 'object') {
-        if (card_head[key].pk === undefined) {
-          card_head[key] = card_head[key].value
-        } else {
-          card_head[key] = card_head[key].pk
-        }
-      }
-    }
-    for (let key in temp) {
-      temp[key].forEach(item => {
-        for (let bodyKey in item) {
-          if (typeof item[bodyKey] === 'object') {
-            if (item[bodyKey].pk === undefined) {
-              item[bodyKey] = item[bodyKey].value
+    let head, bodys = {}
+    dataSource.forEach(table => {
+      let tableName = table.code
+      if (table.yqpx === '1') {
+        head = JSON.parse(JSON.stringify(listItem[tableName]))
+        for (let key in head) {
+          //只传pk
+          if (typeof head[key] === 'object') {
+            if (head[key].pk === undefined) {
+              head[key] = head[key].value
             } else {
-              item[bodyKey] = item[bodyKey].pk
+              head[key] = head[key].pk
             }
           }
         }
-      })
-    }
-
-    for(let key in deletes) {
+      } else {
+        let temp = JSON.parse(JSON.stringify(listItem[tableName]))
+        temp.forEach(item => {
+          for (let bodyKey in item) {
+            if (typeof item[bodyKey] === 'object') {
+              if (item[bodyKey].pk === undefined) {
+                item[bodyKey] = item[bodyKey].value
+              } else {
+                item[bodyKey] = item[bodyKey].pk
+              }
+            }
+          }
+        })
+        bodys[tableName] = temp
+      }
+      console.log('e');
+    })
+    for (let key in deletes) {
       deletes[key].forEach(item => {
-        listItem[key].push(item)
-        temp[key].push(item)
+        bodys[key].push(item)
       })
     }
-    console.log('e');
-    return await getZPXQData({ action: 'add', cuserid, head: card_head, bodys: temp })
+    let billtype = this.props.location.state.billtype
+    let data = { action: 'add', cuserid, head, bodys }
+    return await getZPXQData(data, billtype)
   }
 
   //----------------------------------------Table----------------------------------------//
   /**
-   * 新增
-   * @param {*} value 
-   */
-  onTableAddLisenter = (value) => {
-    tableIndex = -1
-    tableName = value
-  }
-
-  /**
-   * 编辑
-   * @param {*} index 
-   * @param {*} value 
-   */
-  onTableEditLisenter = (index, value) => {
-    tableIndex = index
-    tableName = value
-  }
-
-  /**
    * 删除
    * @param {*} index 
-   * @param {表名} title 
+   * @param {表名} code 
    */
-  onTableDeleteLisenter = (index, title) => {
+  onTableDeleteLisenter = (index, code) => {
     const { listItem } = this.props
     const { dataSource } = this.state
-
-
-    //有这个pk_nrna表示这列数据是远程数据
-    if (!isEmpty(listItem[title][index].pk_nrna)) {
-      listItem[title][index].dr = 1
+    let pkName = this.props.location.state.pk_name
+    //有这个pk表示这列数据是远程数据
+    if (!isEmpty(listItem[code][index][pkName])) {
+      listItem[code][index].dr = 1
       let bodys = isEmpty(deletes.title) ? [] : deletes.title
-      bodys.push(listItem[title][index])
-      deletes[title] = bodys
+      bodys.push(listItem[code][index])
+      deletes[code] = bodys
     }
     //删除
-    listItem[title].splice(index, 1)
+    listItem[code].splice(index, 1)
     dataSource.forEach(item => {
-      if (!isEmpty(item[title])) {
-        item[title].splice(index, 1)
+      if(item.code === code) {
+        item.yqdata.splice(index, 1)
       }
     })
 
@@ -406,21 +365,20 @@ class Detail extends Base {
     //value如果是数组表示是选项
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        selectIndex = -1
         Toast.info('暂无数据！', 1)
       } else {
         selectIndex = index
-        selectCode = code
         this.setState({ showSelect: true, selectData: value })
       }
     } else {
       const { dataSource } = this.state
       dataSource.forEach(item => {
-        if (item.card_head !== undefined) {
-          item.card_head[index].value = value
+        if (item.yqpx === '1') {
+          item.yqdata[index].value = value
+          listItem[item.code][code] = value
         }
       })
-      listItem.card_head[code] = value
+      
       this.setState({ dataSource })
       store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
       store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
@@ -431,13 +389,13 @@ class Detail extends Base {
   onSelectResultCallBack(item) {
     const { listItem } = this.props
     const { dataSource } = this.state
-    dataSource.forEach(v => {
-      let temp = v.card_head
-      if (temp !== undefined) {
-        temp[selectIndex].value = item
+    dataSource.forEach(table => {
+      if (table.yqpx === '1') {
+        let word = table.yqdata[selectIndex]
+        word.value = item
+        listItem[table.code][word.code] = item.activity_id
       }
     })
-    listItem.card_head[selectCode] = item.code
     this.setState({ dataSource, showSelect: false })
     store.dispatch(addTodo('SET_DETAIL_DataSource', dataSource))
     store.dispatch(addTodo('SET_DETAIL_BaseDataSource', listItem))
@@ -445,16 +403,14 @@ class Detail extends Base {
 
   //----------------------------------------Alert----------------------------------------//
   /**
-   * 
+   * 审批
    * @param {审批意见} checkValue 
    * @param {审批内容} content 
    * @param {选中项目} pick 
    */
   onAlertClickSubmit = (checkValue, content, pick) => {
-    const { listItem } = this.props
     this.setState({ showAlert: false })
     const { cuserid } = this.props
-    let pk = listItem.card_head.pk_nrna
     let action = 'approve'
     //审批状态
     let approve = checkValue
@@ -467,19 +423,20 @@ class Detail extends Base {
     switch (checkValue) {
       case 'R':
         //查流程
-        rejectActivity = pick.value === undefined ? '' : pick.value
+        rejectActivity = pick.activity_id === undefined ? '' : pick.activity_id
         break
       case 'T':
-        rgman = pick.value === undefined ? '' : pick.value
+        rgman = pick.cuserid === undefined ? '' : pick.cuserid
         break
       case 'A':
-        rgman = pick.value === undefined ? '' : pick.value
+        rgman = pick.cuserid === undefined ? '' : pick.cuserid
         break
       default:
         break
     }
     let data = { pk, cuserid, action, approve, opinion, rgman, rejectActivity }
-    getZPXQData(data).then(result => {
+    let billName = this.props.location.state.bill_name
+    getZPXQData(data, billName).then(result => {
       Toast.success(result.MESSAGE, 1, () => {
         this.props.history.goBack()
       })

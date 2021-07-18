@@ -32,8 +32,7 @@ axios.interceptors.request.use(config => {
   return config;
 }, error => {
   return Promise.reject(error);
-}
-);
+});
 
 /**
  * http response 拦截器
@@ -50,8 +49,7 @@ axios.interceptors.response.use(response => {
 }, error => {
   Toast.hide()
   message(error)
-}
-);
+});
 
 //统一接口处理，返回数据
 export function http(fecth, url, param) {
