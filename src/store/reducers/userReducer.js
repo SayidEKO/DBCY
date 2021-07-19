@@ -1,8 +1,8 @@
 // 初始token为空
 let defaultState = {
   //用户编码
-  // user_code: 'zhangsan',
-  user_code: '',
+  user_code: 'zzh',
+  // user_code: '',
   cuserid: '',
   user_name: '',
   token: '',

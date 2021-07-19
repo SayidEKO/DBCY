@@ -5,7 +5,7 @@ import { Component } from 'react'
 import { withRouter } from 'react-router-dom';
 
 import { router2tableDetail } from '../utils/routers';
-import { countStringWidth, getLabel } from '../utils/utils';
+import { getLabel, getTextWidth } from '../utils/utils';
 
 import { color_text_blue, font_table_title, font_text_title } from '../config';
 
@@ -39,7 +39,7 @@ let widths = []
         const { title, tableSource, templateSource } = this.props
         //计算每个字段标题的最大宽度
         templateSource.forEach((item, index) => {
-            widths[index] = countStringWidth(item.label)
+            widths[index] = getTextWidth(item.label)
         })
         //计算每个字段值的最大宽度
         tableSource.forEach(items => {
@@ -49,7 +49,7 @@ let widths = []
                 if (item.itemtype === 'datepicker' || item.itemtype === 'datetimepicker') {
                     value = value.split(' ')[0]
                 }
-                let tempWidth = countStringWidth(value)
+                let tempWidth = getTextWidth(value)
                 //如果值的宽度大于标题的宽度就重新赋值
                 if (widths[index] < tempWidth) {
                     widths[index] = tempWidth

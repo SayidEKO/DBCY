@@ -155,15 +155,77 @@ export const menus = {
   培训管理: {
     url: '/work/train',
     icon: require('./assets/menus/train.png').default,
-    title: [
-      '部门级培训计划需求申请',
-      '培训计划',
-      '培训申请维护',
-      '公司级培训计划开班通知',
-      '培训签到考核表',
-      '培训效果评估',
-      '培训答题',
-      '培训信息汇总'
+    child: [
+      {
+        //小标题
+        title: '部门级培训计划需求申请',
+        //用于获取pk
+        pk_name:'pk_depttrain',
+        //列表节点
+        funcode_list: '99H00151_wx_list',
+        //详情节点
+        funcode_detail: { save: '99H00151_wx_bc', audit: '99H00151_wx_xq' },
+        //单据类型
+        billtype: '9H51',
+        //单据类型值
+        bill: { name: '部门级培训计划需求申请', code: '0001ZZZZF90241BA897E' }
+      },
+      {
+        title: '培训计划',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训计划', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '培训申请维护',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训申请维护', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '公司级培训计划开班通知',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '公司级培训计划开班通知', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '培训签到考核表',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训签到考核表', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '培训效果评估',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训效果评估', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '培训答题',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训答题', code: '0001ZZZZ29EAC07A857A' }
+      },
+      {
+        title: '培训信息汇总',
+        pk_name:'pk_nrna',
+        funcode_list: '99H10101_wx_list',
+        funcode_detail: { save: '99H10101_wx_bc', audit: '99H10101_wx_xq' },
+        billtype: 'ZPXQ',
+        bill: { name: '培训信息汇总', code: '0001ZZZZ29EAC07A857A' }
+      }
     ]
   },
 
@@ -271,4 +333,4 @@ export const font_text_title = 10
 export const font_table_title = 16
 
 //环境切换
-export const DEBUG = false
+export const DEBUG = true

@@ -79,20 +79,15 @@ export function getFormatDate(format, date) {
  * @param {字符串} value 
  * @returns 
  */
-export function countStringWidth(value) {
-  let stringWidth = 20
-  let numberWidth = 10
-  let width = 0
-  //拆分字符串
-  let chars = value.split('')
-  chars.forEach(char => {
-    if (!isNaN(Number(char))) {
-      width += numberWidth
-    } else {
-      width += stringWidth
-    }
-  })
-  return width
+ export function getTextWidth(str) {
+  const dom = document.createElement('span');
+  dom.style.display = 'inline-block';
+  dom.textContent = str;
+  document.body.appendChild(dom);
+  const width = dom.clientWidth;
+  console.log(dom.clientWidth);
+  document.body.removeChild(dom);
+  return width + 20;
 }
 
 
